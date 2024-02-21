@@ -93,7 +93,7 @@ class SawyerXYZEnv(SawyerMocapBase, EzPickle):
         np.array([+0.525, 1.025, 0.7]),
         dtype=np.float64,
     )
-    max_path_length = 500
+    max_path_length = 2500
 
     TARGET_RADIUS = 0.05
 

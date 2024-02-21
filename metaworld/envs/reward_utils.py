@@ -220,3 +220,23 @@ def hamacher_product(a, b):
 
     assert 0.0 <= h_prod <= 1.0
     return h_prod
+
+def combined_velocity(cur_x, cur_y, cur_z, prev_x, prev_y, prev_z):
+    # Example previous and current positions
+    prev_position = np.array([prev_x, prev_y, prev_z])  # Previous x, y, z positions
+    cur_position = np.array([cur_x, cur_y, cur_z])     # Current x, y, z positions
+
+    # Assuming uniform time intervals, calculate time interval
+    # For simplicity, let's assume time interval between previous and current positions is 1 unit
+    time_interval = 1
+
+    # Calculate change in position for each dimension (x, y, z)
+    delta_position = cur_position - prev_position
+
+    # Calculate velocity for each dimension (x, y, z)
+    velocity = delta_position / time_interval
+
+    # Calculate the Euclidean norm (magnitude) of the velocity vector
+    combined_velocity = np.linalg.norm(velocity)
+
+    return combined_velocity

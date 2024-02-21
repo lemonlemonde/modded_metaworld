@@ -11,7 +11,9 @@ from metaworld.envs.mujoco.sawyer_xyz.sawyer_xyz_env import (
 
 
 class SawyerButtonPressEnvV2(SawyerXYZEnv):
-    def __init__(self, tasks=None, render_mode=None):
+    prev = None
+    weights = [1, 1, 1, 1]
+    def __init__(self, tasks=None, render_mode="human"):
         hand_low = (-0.5, 0.40, 0.05)
         hand_high = (0.5, 1, 0.5)
         obj_low = (-0.1, 0.85, 0.115)
@@ -49,24 +51,34 @@ class SawyerButtonPressEnvV2(SawyerXYZEnv):
 
     @_assert_task_is_set
     def evaluate_state(self, obs, action):
+        # (
+        #     reward,
+        #     tcp_to_obj,
+        #     tcp_open,
+        #     obj_to_target,
+        #     near_button,
+        #     button_pressed,
+        # ) = self.compute_reward(action, obs)
         (
-            reward,
-            tcp_to_obj,
-            tcp_open,
-            obj_to_target,
-            near_button,
-            button_pressed,
-        ) = self.compute_reward(action, obs)
+            reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj
+        ) = self.compute_reward_v2(action, obs)
 
         info = {
-            "success": float(obj_to_target <= 0.02),
-            "near_object": float(tcp_to_obj <= 0.05),
-            "grasp_success": float(tcp_open > 0),
-            "grasp_reward": near_button,
-            "in_place_reward": button_pressed,
-            "obj_to_target": obj_to_target,
-            "unscaled_reward": reward,
+            "avg_sum": avg_sum,
+            "tcp_height": tcp_height,
+            "tcp_vel": tcp_vel,
+            "tcp_to_obj": tcp_to_obj
         }
+
+        # info = {
+        #     "success": float(obj_to_target <= 0.02),
+        #     "near_object": float(tcp_to_obj <= 0.05),
+        #     "grasp_success": float(tcp_open > 0),
+        #     "grasp_reward": near_button,
+        #     "in_place_reward": button_pressed,
+        #     "obj_to_target": obj_to_target,
+        #     "unscaled_reward": reward,
+        # }
 
         return reward, info
 
@@ -137,6 +149,41 @@ class SawyerButtonPressEnvV2(SawyerXYZEnv):
             reward += 8 * button_pressed
 
         return (reward, tcp_to_obj, obs[3], obj_to_target, near_button, button_pressed)
+    
+    def compute_reward_v2(self, action, obs):
+        del action
+        obj = obs[4:7]
+        tcp = self.tcp_center
+        cur = tcp
+
+        # calculate height
+        tcp_height = tcp[2]
+
+        # velocity
+        if (self.prev is None):
+            self.prev = cur
+        tcp_vel = reward_utils.combined_velocity(cur[0], cur[1], cur[2], self.prev[0], self.prev[1], self.prev[2])
+        print("tcp: ", tcp)
+
+        # distance to button
+        tcp_to_obj = np.linalg.norm(obj - tcp)
+
+        # avg sum of that
+        avg_sum = (tcp_height + tcp_vel + tcp_to_obj) / 3
+
+        # update
+        self.prev = tcp
+
+
+        
+        # compute actual reward
+        features = np.asarray([avg_sum, tcp_height, tcp_vel, tcp_to_obj])
+        weights = np.asarray(self.weights)
+        assert len(features.shape) == 1
+        assert len(weights.shape) == 1
+        reward = np.dot(features, weights)
+
+        return (reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj)
 
 
 class TrainButtonPressv2(SawyerButtonPressEnvV2):

@@ -5,12 +5,13 @@ For this script to work, you need to have the PyGame window in focus.
 See/modify `char_to_action` to set the key-to-action mapping.
 """
 import sys
+import time
 
 import numpy as np
 import pygame
 from pygame.locals import KEYDOWN, QUIT
 
-from metaworld.envs.mujoco.sawyer_xyz import SawyerPickPlaceEnvV2
+from metaworld.envs.mujoco.sawyer_xyz.v2 import SawyerPickPlaceEnvV2
 
 pygame.init()
 screen = pygame.display.set_mode((400, 300))
@@ -48,7 +49,7 @@ action = np.zeros(4)
 while True:
     done = False
     if not lock_action:
-        action[:3] = 0
+        action[:4] = 0
     if not random_action:
         for event in pygame.event.get():
             event_happened = True
@@ -57,7 +58,12 @@ while True:
             if event.type == KEYDOWN:
                 char = event.dict["key"]
                 new_action = char_to_action.get(chr(char), None)
-                if new_action == "toggle":
+                print("key: ", chr(char))
+                print("new_action: ", new_action)
+                # if new action is a numpy array, it's a movement action
+                if isinstance(new_action, np.ndarray):
+                    action = new_action
+                elif new_action == "toggle":
                     lock_action = not lock_action
                 elif new_action == "reset":
                     done = True
@@ -68,12 +74,14 @@ while True:
                 elif new_action is not None:
                     action[:3] = new_action[:3]
                 else:
-                    action = np.zeros(3)
+                    action = np.zeros(4)
+                    event_happened = False
+
                 print(action)
     else:
         action = env.action_space.sample()
-    ob, reward, done, infos = env.step(action)
-    # time.sleep(1)
+    ob, reward, done, infos, features = env.step(action)
+    time.sleep(0.05)
     if done:
         obs = env.reset()
     env.render()
