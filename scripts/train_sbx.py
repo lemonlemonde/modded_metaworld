@@ -21,22 +21,27 @@ eval_callback = EvalCallback(eval_env, best_model_save_path="./logs/",
                              deterministic=True, render=False)
 
 model = SAC("MlpPolicy", env, verbose=1, batch_size=500)
-model.learn(total_timesteps=2_500_000, callback=eval_callback)
+model.learn(total_timesteps=250_000, callback=eval_callback)
 print("Training done!")
 
 model.save("sac_button_press_goal_observable")
-# model = SAC.load("sac_pick_place_v2_goal_observable", env=eval_env)
+model = SAC.load("sac_button_press_v2_goal_observable", env=eval_env)
 
 images = []
 obs, _ = eval_env.reset()
 img = eval_env.render()
-for i in range(500):
-    images.append(img)
-    action, _ = model.predict(obs)
-    obs, reward, done, truncated, info = eval_env.step(action)
-    print(info['is_success'], info['obj_to_target'])
-    img = eval_env.render()
-    if done:
-        break
+success_count = 0
+for i in range(10):
+    for t in range(500):
+        action, _ = model.predict(obs)
+        obs, reward, done, truncated, info = eval_env.step(action)
+        # print(info['is_success'], info['obj_to_target'], reward)
+        if i == 0:
+            images.append(img)
+            img = eval_env.render()
+        if info['is_success']:
+            success_count += 1
+            break
 
+print("Success rate: ", success_count / 10)
 imageio.mimsave("button_press.gif", [np.array(img) for i, img in enumerate(images)], fps=30)
