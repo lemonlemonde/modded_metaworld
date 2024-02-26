@@ -16,12 +16,9 @@ eval_env = button_press_goal_observable_cls(render_mode='rgb_array')
 eval_env._freeze_rand_vec = False
 
 # Use deterministic actions for evaluation
-eval_callback = EvalCallback(eval_env, best_model_save_path="./logs/",
-                             log_path="./logs/", eval_freq=100_000,
-                             deterministic=True, render=False)
 
 model = SAC("MlpPolicy", env, verbose=1, batch_size=500)
-model.learn(total_timesteps=250_000, callback=eval_callback)
+model.learn(total_timesteps=250_000)
 print("Training done!")
 
 model.save("sac_button_press_goal_observable")
