@@ -13,7 +13,7 @@ from metaworld.envs.mujoco.sawyer_xyz.sawyer_xyz_env import (
 class SawyerButtonPressEnvV2(SawyerXYZEnv):
     prev = None
     weights = [1, 1, 1, 1]
-    def __init__(self, tasks=None, render_mode="human"):
+    def __init__(self, tasks=None, render_mode=None):
         hand_low = (-0.5, 0.40, 0.05)
         hand_high = (0.5, 1, 0.5)
         obj_low = (-0.1, 0.85, 0.115)
