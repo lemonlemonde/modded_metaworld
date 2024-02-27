@@ -2,6 +2,48 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Farama-Foundation/metaworld/blob/master/LICENSE)
 ![Build Status](https://github.com/Farama-Foundation/Metaworld/workflows/MetaWorld%20CI/badge.svg)
 
+# Environment Setup
+First create a new conda env named `metaworld`
+```
+conda create -n metaworld python=3.8
+conda activate metaworld
+```
+Install mujoco related packages. [Reference](https://pytorch.org/rl/reference/generated/knowledge_base/MUJOCO_INSTALLATION.html) 
+```
+conda install -c conda-forge glew
+conda install -c conda-forge mesalib
+conda install -c anaconda mesa-libgl-cos6-x86_64
+conda install -c menpo glfw3
+```
+Set mujoco backend to egl
+```
+conda env config vars set MUJOCO_GL=egl PYOPENGL_PLATFORM=egl
+conda deactivate && conda activate metaworld
+```
+Then install current repo
+```
+# Make sure you are in the modded_metaworld directory
+pip install -e .
+```
+Finally install stable-basleines3 and sbx
+```
+# PyTorch
+pip install torch==2.0.0 torchvision==0.15.1 torchaudio==2.0.1 --index-url https://download.pytorch.org/whl/cu118
+
+# Jax
+pip install --upgrade "jax[cuda11_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+
+# Stable-baselines3 and SBX
+pip install git+https://github.com/araffin/sbx
+
+```
+
+# Train
+run `python scripts/train_sbx.py` or `python scripts/train_sb3.py`
+
+As Jax is much faster than Pytorch, I would recommend using `train_sbx.py`
+
+
 # The current version of Meta-World is a work in progress. If you find any bugs/errors please open an issue.
 
 __Meta-World is an open-source simulated benchmark for meta-reinforcement learning and multi-task learning consisting of 50 distinct robotic manipulation tasks.__ We aim to provide task distributions that are sufficiently broad to evaluate meta-RL algorithms' generalization ability to new behaviors.
