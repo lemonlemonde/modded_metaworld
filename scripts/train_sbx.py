@@ -6,9 +6,12 @@ from sbx import SAC
 from stable_baselines3.common.callbacks import EvalCallback
 from metaworld.envs import ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE, ALL_V2_ENVIRONMENTS_GOAL_HIDDEN
 import imageio
+import sys
+
+
 
 # declare main function
-def main(args):
+def main(args, save_path):
 
     button_press_goal_observable_cls = ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE["button-press-v2-goal-observable"]
     button_press_goal_hidden_cls = ALL_V2_ENVIRONMENTS_GOAL_HIDDEN["button-press-v2-goal-hidden"]
@@ -38,11 +41,11 @@ def main(args):
     # Use deterministic actions for evaluation
 
     model = SAC("MlpPolicy", env, verbose=1, batch_size=500)
-    model.learn(total_timesteps=250_000)
+    model.learn(total_timesteps=300_000) # 250_000
     print("Training done!")
 
-    model.save("sac_button_press_goal_observable")
-    model = SAC.load("sac_button_press_v2_goal_observable", env=eval_env)
+    model.save(save_path + "/sac_button_press_v2_goal_observable")
+    model = SAC.load(save_path + "/sac_button_press_v2_goal_observable", env=eval_env)
 
     images = []
     obs, _ = eval_env.reset()
@@ -61,16 +64,34 @@ def main(args):
                 break
 
     print("Success rate: ", success_count / 10)
-    imageio.mimsave("button_press.gif", [np.array(img) for i, img in enumerate(images)], fps=30)
+    imageio.mimsave(save_path + "/button_press.gif", [np.array(img) for i, img in enumerate(images)], fps=30)
 
 # call main function
 if __name__ == "__main__":
     # args
     parser = argparse.ArgumentParser()
-    parser.add_argument("--variant", help="e.g., 2-2-2-0-1", type=str, default="0-0-0-0-0")
+    parser.add_argument("--variant", help="e.g., 0-1-1-2", type=str, default="0-0-0-0")
 
     args = parser.parse_args()
 
+    # change stdout to a file
+    orig_stdout = sys.stdout
+    orig_stderr = sys.stderr
+
+    cur_dir = os.path.dirname(os.path.abspath(__file__))
+    save_path = os.path.abspath(os.path.join(cur_dir, "..", "training_results", args.variant))
+
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    f = open(save_path + '/out.txt', 'w')
+    sys.stdout = f
+    sys.stderr = f
+
     print("args variant: " + args.variant)
     
-    main(args)
+    main(args, save_path)
+
+    # change it back!
+    sys.stdout = orig_stdout
+    sys.stderr = orig_stderr
+    f.close()

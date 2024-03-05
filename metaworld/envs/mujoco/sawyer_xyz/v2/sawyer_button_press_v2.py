@@ -186,7 +186,7 @@ class SawyerButtonPressEnvV2(SawyerXYZEnv):
         return (reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj)
     
     def set_variant(self, variant):
-        print("Setting weights to: " + str(variant['weights'][0]) + ", " + str(variant['weights'][1]) )
+        print("Setting weights to: " + str(variant['weights'][0]) + ", " + str(variant['weights'][1]) + ", " + str(variant['weights'][2]) + ", " + str(variant['weights'][3])  )
         self.weights = variant['weights']
 
 

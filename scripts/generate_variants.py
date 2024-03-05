@@ -49,7 +49,7 @@ for height in range(3):
                                                                     distance_to_obj_weight, 
                                                                     avgsum_weight ]
 
-                output_path = os.path.abspath(os.path.join(cur_dir, "..", "training_configs/sawyer_button_press_v2/variants", "{}-{}-{}-{}-{}/".format(height, vel, height, distance_to_obj, avg_sum))) 
+                output_path = os.path.abspath(os.path.join(cur_dir, "..", "training_configs/sawyer_button_press_v2/variants", "{}-{}-{}-{}/".format(height, vel, distance_to_obj, avg_sum))) 
 
                 filename = "variant.json"
                 if not os.path.exists(output_path):
