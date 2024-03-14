@@ -2,6 +2,36 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/rlworkgroup/metaworld/blob/master/LICENSE)
 ![Build Status](https://github.com/rlworkgroup/metaworld/workflows/MetaWorld%20CI/badge.svg)
 
+## Eval Environment Setup
+Create a new conda environment named `mw-eval`
+```
+conda create -n mw-eval python=3.8
+conda activate mw-eval
+```
+Install mujoco related packages & set mujoco backend to egl
+```
+conda install -c conda-forge glew
+conda install -c conda-forge mesalib
+conda install -c anaconda mesa-libgl-cos6-x86_64
+conda install -c menpo glfw3
+
+conda env config vars set MUJOCO_GL=egl PYOPENGL_PLATFORM=egl
+conda deactivate && conda activate metaworld
+```
+Then install current repo
+```
+pip install -e .
+```
+
+Finally install stable-baselines3
+```
+pip install --upgrade pip wheel==0.38.4 setuptools==65.5.1
+pip install stable-baselines3==1.8.0
+```
+
+## Evaluation
+`python scripts/eval_sb3.py`
+
 __Meta-World is an open-source simulated benchmark for meta-reinforcement learning and multi-task learning consisting of 50 distinct robotic manipulation tasks.__ We aim to provide task distributions that are sufficiently broad to evaluate meta-RL algorithms' generalization ability to new behaviors.
 
 For more background information, please refer to our [website](https://meta-world.github.io) and the accompanying [conference publication](https://arxiv.org/abs/1910.10897), which **provides baseline results for 8 state-of-the-art meta- and multi-task RL algorithms**.
