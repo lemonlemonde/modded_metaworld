@@ -51,34 +51,35 @@ class SawyerButtonPressEnvV2(SawyerXYZEnv):
 
     @_assert_task_is_set
     def evaluate_state(self, obs, action):
-        (
-            reward,
-            tcp_to_obj,
-            tcp_open,
-            obj_to_target,
-            near_button,
-            button_pressed,
-        ) = self.compute_reward(action, obs)
         # (
-        #     reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj
-        # ) = self.compute_reward_v2(action, obs)
-
-        # info = {
-        #     "avg_sum": avg_sum,
-        #     "tcp_height": tcp_height,
-        #     "tcp_vel": tcp_vel,
-        #     "tcp_to_obj": tcp_to_obj
-        # }
+        #     reward,
+        #     tcp_to_obj,
+        #     tcp_open,
+        #     obj_to_target,
+        #     near_button,
+        #     button_pressed,
+        # ) = self.compute_reward(action, obs)
+        (
+            reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj, obj_to_target
+        ) = self.compute_reward_v2(action, obs)
 
         info = {
             "is_success": float(obj_to_target <= 0.02),
-            "near_object": float(tcp_to_obj <= 0.05),
-            "grasp_success": float(tcp_open > 0),
-            "grasp_reward": near_button,
-            "in_place_reward": button_pressed,
-            "obj_to_target": obj_to_target,
-            "unscaled_reward": reward,
+            "avg_sum": avg_sum,
+            "tcp_height": tcp_height,
+            "tcp_vel": tcp_vel,
+            "tcp_to_obj": tcp_to_obj
         }
+
+        # info = {
+        #     "is_success": float(obj_to_target <= 0.02),
+        #     "near_object": float(tcp_to_obj <= 0.05),
+        #     "grasp_success": float(tcp_open > 0),
+        #     "grasp_reward": near_button,
+        #     "in_place_reward": button_pressed,
+        #     "obj_to_target": obj_to_target,
+        #     "unscaled_reward": reward,
+        # }
 
         return reward, info
 
@@ -167,6 +168,7 @@ class SawyerButtonPressEnvV2(SawyerXYZEnv):
 
         # distance to button
         tcp_to_obj = np.linalg.norm(obj - tcp)
+        obj_to_target = abs(self._target_pos[1] - obj[1])
 
         # avg sum of that
         avg_sum = (tcp_height + tcp_vel + tcp_to_obj) / 3
@@ -183,7 +185,7 @@ class SawyerButtonPressEnvV2(SawyerXYZEnv):
         assert len(weights.shape) == 1
         reward = np.dot(features, weights)
 
-        return (reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj)
+        return (reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj, obj_to_target)
     
     def set_variant(self, variant):
         print("Setting weights to: " + str(variant['weights'][0]) + ", " + str(variant['weights'][1]) + ", " + str(variant['weights'][2]) + ", " + str(variant['weights'][3])  )
