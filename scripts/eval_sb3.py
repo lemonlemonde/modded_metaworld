@@ -13,7 +13,7 @@ from metaworld.envs import ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE
 def main(args):
     # Init the environment
     button_press_goal_observable_cls = ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE["button-press-v2-goal-observable"]
-    eval_env = button_press_goal_observable_cls(render_mode='rgb_array')
+    eval_env = button_press_goal_observable_cls()
     eval_env._freeze_rand_vec = False
 
     # Opening JSON file for weight variants
@@ -40,8 +40,8 @@ def main(args):
     images = []
     success_count = 0
     for i in range(10):
-        obs, _ = eval_env.reset()
-        img = eval_env.render()
+        obs = eval_env.reset()
+        img = eval_env.render(offscreen=True)
         for t in range(500):
             action, _ = model.predict(obs)
             obs, reward, done, info = eval_env.step(action)
@@ -54,7 +54,7 @@ def main(args):
                 break
             if i == 0:
                 images.append(img)
-                img = eval_env.render()
+                img = eval_env.render(offscreen=True)
 
     print("Success rate: ", success_count / 10)
     imageio.mimsave(os.path.join(train_dir, "button_press_eval.gif"), [np.array(img) for i, img in enumerate(images)], fps=30)

@@ -107,6 +107,7 @@ class MujocoEnv(gym.Env, abc.ABC):
 
     def do_simulation(self, ctrl, n_frames=None):
         if getattr(self, 'curr_path_length', 0) > self.max_path_length:
+            print(self.curr_path_length, self.max_path_length)
             raise ValueError('Maximum path length allowed by the benchmark has been exceeded')
         if self._did_see_sim_exception:
             return
