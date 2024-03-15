@@ -1,7 +1,7 @@
 import os
 import numpy as np
 # from sbx import SAC
-from stable_baselines3 import SAC
+from sbx import SAC
 from stable_baselines3.common.save_util import load_from_zip_file
 import imageio
 import argparse

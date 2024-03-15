@@ -3,30 +3,13 @@
 ![Build Status](https://github.com/rlworkgroup/metaworld/workflows/MetaWorld%20CI/badge.svg)
 
 ## Eval Environment Setup
-Create a new conda environment named `mw-eval`
-```
-conda create -n mw-eval python=3.8
-conda activate mw-eval
-```
-Install mujoco related packages & set mujoco backend to egl
-```
-conda install -c conda-forge glew
-conda install -c conda-forge mesalib
-conda install -c anaconda mesa-libgl-cos6-x86_64
-conda install -c menpo glfw3
-
-conda env config vars set MUJOCO_GL=egl PYOPENGL_PLATFORM=egl
-conda deactivate && conda activate metaworld
-```
-Then install current repo
-```
-pip install -e .
-```
-
-Finally install stable-baselines3
+First install current repo
 ```
 pip install --upgrade pip wheel==0.38.4 setuptools==65.5.1
-pip install stable-baselines3==1.8.0
+pip install gym==0.21
+pip install -e .
+pip install Cython<3.0
+pip install shimmy>=0.2.1
 ```
 
 ## Evaluation
