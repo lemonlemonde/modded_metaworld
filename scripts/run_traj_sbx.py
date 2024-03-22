@@ -42,14 +42,18 @@ def main(args):
     state_action_pairs = []
 
     # run the agent 4 times
-    for i in range(4):
+    for i in range(args.num_trials):
         obs = eval_env.reset()
         img = eval_env.render(offscreen=True)
         # 500 timesteps
         for t in range(500):
             action, _ = model.predict(obs)
             obs, reward, done, info = eval_env.step(action)
-            print("info" + info)
+            pair = (action, info["env_state"])
+            print("pair:")
+            print(pair)
+            state_action_pairs.append(pair)
+
             if done:
                 eval_env.reset()
                 break
@@ -63,6 +67,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--variant", help="e.g., 0-1-1-2", type=str, default="0-0-0-0")
+    parser.add_argument("--num-trials", help="number of runs of this trained variant", type=int, default=4)
 
     args = parser.parse_args()
 

@@ -65,7 +65,7 @@ class SawyerButtonPressEnvV2(SawyerXYZEnv):
         # }
 
         (
-            reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj
+            reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj, env_state
         ) = self.compute_reward_v2(action, obs)
 
         info = {
@@ -73,7 +73,8 @@ class SawyerButtonPressEnvV2(SawyerXYZEnv):
             "avg_sum": avg_sum,
             "tcp_height": tcp_height,
             "tcp_vel": tcp_vel,
-            "tcp_to_obj": tcp_to_obj
+            "tcp_to_obj": tcp_to_obj,
+            "env_state": env_state
         }
 
         return reward, info
@@ -184,8 +185,9 @@ class SawyerButtonPressEnvV2(SawyerXYZEnv):
         assert len(features.shape) == 1
         assert len(weights.shape) == 1
         reward = np.dot(features, weights)
+        env_state = self.get_env_state()
 
-        return (reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj)
+        return (reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj, env_state)
     
     def set_variant(self, variant):
         print("Setting weights to: " + str(variant['weights'][0]) + ", " + str(variant['weights'][1]) + ", " + str(variant['weights'][2]) + ", " + str(variant['weights'][3])  )
