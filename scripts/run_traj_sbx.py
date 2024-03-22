@@ -37,7 +37,8 @@ def main(args):
     model.set_parameters(params, exact_match=True, device="auto")
 
 
-    
+    eval_env.reset()
+    state = eval_env.get_env_state()
 
     # directory
     trajectory_dir = os.path.join(cur_dir, "../trajectories", args.variant)
@@ -52,6 +53,7 @@ def main(args):
         state_action_pairs = []
 
         obs = eval_env.reset()
+        eval_env.set_env_state(state)
         img = eval_env.render(offscreen=True)
         # img = eval_env.render()
         images.append(img)
@@ -94,6 +96,7 @@ def main(args):
     for i in range(args.num_trajs):
         print("replaying trajectory " + str(i))
         eval_env.reset()
+        eval_env.set_env_state(state)
         images = []
 
         with open(os.path.join(trajectory_dir, "state_action_pairs_" + str(i) + ".json"), 'r') as openfile:
