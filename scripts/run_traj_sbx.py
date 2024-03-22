@@ -1,4 +1,5 @@
 import os
+import time
 import numpy as np
 # from sbx import SAC
 from sbx import SAC
@@ -37,18 +38,27 @@ def main(args):
     model.set_parameters(params, exact_match=True, device="auto")
 
 
-    # save images and state-action pairs
-    images = []
-    state_action_pairs = []
+    
 
-    # run the agent 4 times
-    for i in range(args.num_trials):
+    # directory
+    trajectory_dir = os.path.join(cur_dir, "../trajectories", args.variant)
+
+    # run the agent x times
+    for i in range(args.num_trajs):
+        # save images and state-action pairs
+        images = []
+        state_action_pairs = []
+
         obs = eval_env.reset()
         img = eval_env.render(offscreen=True)
         # 500 timesteps
         for t in range(500):
             action, _ = model.predict(obs)
             obs, reward, done, info = eval_env.step(action)
+
+            # sleep
+            time.sleep(0.1)
+
             pair = (action, info["env_state"])
             print("pair:")
             print(pair)
@@ -61,13 +71,42 @@ def main(args):
                 images.append(img)
                 img = eval_env.render(offscreen=True)
 
-    imageio.mimsave(os.path.join(train_dir, "button_press_eval.gif"), [np.array(img) for i, img in enumerate(images)], fps=30)
-    
+        imageio.mimsave(os.path.join(trajectory_dir, "button_press_" + i + ".gif"), [np.array(img) for i, img in enumerate(images)], fps=30)
+        # save state-action pairs as json
+        with open(os.path.join(trajectory_dir, "state_action_pairs_" + i ".json"), 'w') as outfile:
+            json.dump(state_action_pairs, outfile)
+
+
+
+
+    print("Done!")
+
+    print("Now replay the trajectory:")
+
+    # replay the trajectory
+    # get the state-action pairs
+    for i in range(args.num_trajs):
+        with open(os.path.join(trajectory_dir, "state_action_pairs_" + i + ".json"), 'r') as openfile:
+            state_action_pairs = json.load(openfile)
+
+        eval_env.reset()
+
+        # replay the trajectory
+        for pair in state_action_pairs:
+            action = pair[0]
+            obs = pair[1]
+            eval_env.set_env_state(obs)
+            eval_env.step(action)
+            eval_env.render()
+
+            # sleep
+            time.sleep(0.1)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--variant", help="e.g., 0-1-1-2", type=str, default="0-0-0-0")
-    parser.add_argument("--num-trials", help="number of runs of this trained variant", type=int, default=4)
+    parser.add_argument("--num-trajs", help="number of runs of this trained variant", type=int, default=4)
 
     args = parser.parse_args()
 
