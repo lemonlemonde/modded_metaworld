@@ -10,7 +10,6 @@ import json
 
 from metaworld.envs import ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE
 
-
 def main(args):
     # Init the environment
     button_press_goal_observable_cls = ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE["button-press-v2-goal-observable"]
@@ -42,38 +41,45 @@ def main(args):
 
     # directory
     trajectory_dir = os.path.join(cur_dir, "../trajectories", args.variant)
+    if (os.path.exists(trajectory_dir) == False):
+        os.makedirs(trajectory_dir)
 
     # run the agent x times
     for i in range(args.num_trajs):
+        print("Running trial: " + str(i))
         # save images and state-action pairs
         images = []
         state_action_pairs = []
 
         obs = eval_env.reset()
         img = eval_env.render(offscreen=True)
+        # img = eval_env.render()
+        images.append(img)
+
         # 500 timesteps
         for t in range(500):
             action, _ = model.predict(obs)
             obs, reward, done, info = eval_env.step(action)
 
-            # sleep
-            time.sleep(0.1)
+            img = eval_env.render(offscreen=True)
+            # img = eval_env.render()
+            images.append(img)
 
-            pair = (action, info["env_state"])
-            print("pair:")
-            print(pair)
-            state_action_pairs.append(pair)
+            # pair = {"action": action}
+            # print("pair:")
+            # print(pair)
+            # print(action)
+            state_action_pairs.append(action.tolist())
 
             if done:
                 eval_env.reset()
                 break
-            if i == 0:
-                images.append(img)
-                img = eval_env.render(offscreen=True)
 
-        imageio.mimsave(os.path.join(trajectory_dir, "button_press_" + i + ".gif"), [np.array(img) for i, img in enumerate(images)], fps=30)
+
+        imageio.mimsave(os.path.join(trajectory_dir, "button_press_" + str(i) + ".gif"), [np.array(img) for i, img in enumerate(images)], fps=30)
         # save state-action pairs as json
-        with open(os.path.join(trajectory_dir, "state_action_pairs_" + i ".json"), 'w') as outfile:
+        with open(os.path.join(trajectory_dir, "state_action_pairs_" + str(i) + ".json"), 'w') as outfile:
+            # for action in state_action_pairs:
             json.dump(state_action_pairs, outfile)
 
 
@@ -86,21 +92,23 @@ def main(args):
     # replay the trajectory
     # get the state-action pairs
     for i in range(args.num_trajs):
-        with open(os.path.join(trajectory_dir, "state_action_pairs_" + i + ".json"), 'r') as openfile:
-            state_action_pairs = json.load(openfile)
-
+        print("replaying trajectory " + str(i))
         eval_env.reset()
+        images = []
 
-        # replay the trajectory
-        for pair in state_action_pairs:
-            action = pair[0]
-            obs = pair[1]
-            eval_env.set_env_state(obs)
-            eval_env.step(action)
-            eval_env.render()
+        with open(os.path.join(trajectory_dir, "state_action_pairs_" + str(i) + ".json"), 'r') as openfile:
+            actions = json.load(openfile)
+            # replay the trajectory
+            # action = pair["action"]
+            # state = pair["state"]
+            # eval_env.set_env_state(obs)
+            for action in actions:
+                eval_env.step(np.array(action))
+                img = eval_env.render(offscreen=True)
+                images.append(img)
 
-            # sleep
-            time.sleep(0.1)
+        imageio.mimsave(os.path.join(trajectory_dir, "replay_" + str(i) + ".gif"), [np.array(img) for i, img in enumerate(images)], fps=30)
+
 
 
 if __name__ == "__main__":

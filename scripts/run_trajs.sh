@@ -5,6 +5,6 @@ variants=("0-0-0-0")
 for var in "${variants[@]}"; do
     echo "Running trajectory with trained variant=$var"
 
-    python ./scripts/run_traj_sbx.py --variant=$var --num-trajs=1
+    python ./scripts/run_traj_sbx.py --variant=$var --num-trajs=2
 
 done
