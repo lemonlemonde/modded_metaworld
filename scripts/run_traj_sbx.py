@@ -10,6 +10,8 @@ import json
 
 from metaworld.envs import ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE
 
+import scripts.replay_traj_sbx as replay
+
 def main(args):
     # Init the environment
     button_press_goal_observable_cls = ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE["button-press-v2-goal-observable"]
@@ -40,14 +42,18 @@ def main(args):
     eval_env.reset()
     state = eval_env.get_env_state()
 
-    # save state as json
-    with open(os.path.join(trajectory_dir, "state.json" ), 'w') as outfile:
-        json.dump(state.tolist(), outfile)
-
     # directory
     trajectory_dir = os.path.join(cur_dir, "../trajectories", args.variant)
     if (os.path.exists(trajectory_dir) == False):
         os.makedirs(trajectory_dir)
+
+    # save state as json
+    with open(os.path.join(trajectory_dir, "state.json" ), 'w') as outfile:
+        print("state")
+        print(state)
+
+        jsonstr = json.dumps(state)
+        outfile.write(jsonstr)
 
     # run the agent x times
     for i in range(args.num_trajs):
@@ -89,45 +95,17 @@ def main(args):
             json.dump(actions, outfile)
         
 
-
-
-
     print("Done!")
 
-    # replay the trajectory
-    print("Now replay the trajectory:")
-
-    # get the state
-    with open(os.path.join(trajectory_dir, "state.json"), 'r') as openfile:
-        state = json.load(openfile)
-
-    
-    # get the state-action pairs
-    for i in range(args.num_trajs):
-        print("replaying trajectory " + str(i))
-        eval_env.reset()
-        eval_env.set_env_state(state)
-        images = []
-
-        with open(os.path.join(trajectory_dir, "actions_" + str(i) + ".json"), 'r') as openfile:
-            actions = json.load(openfile)
-            # replay the trajectory
-            # action = pair["action"]
-            # state = pair["state"]
-            # eval_env.set_env_state(obs)
-            for action in actions:
-                eval_env.step(np.array(action))
-                img = eval_env.render(offscreen=True)
-                images.append(img)
-
-        imageio.mimsave(os.path.join(trajectory_dir, "replay_" + str(i) + ".gif"), [np.array(img) for i, img in enumerate(images)], fps=30)
-
+    if (args.run_replay):
+        replay.main(args)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--variant", help="e.g., 0-1-1-2", type=str, default="0-0-0-0")
     parser.add_argument("--num-trajs", help="number of runs of this trained variant", type=int, default=4)
+    parser.add_argument("--run-replay", help="if true, runs replay_traj_sbx.py to confirm replay works", type=bool, default=True)
 
     args = parser.parse_args()
 
