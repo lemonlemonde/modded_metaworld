@@ -1,5 +1,5 @@
-
 import os
+import pickle
 import time
 import numpy as np
 # from sbx import SAC
@@ -20,8 +20,8 @@ def main(args):
     trajectory_dir = os.path.join(cur_dir, "../trajectories", args.variant)
 
     # get the saved state to replay
-    with open(os.path.join(trajectory_dir, "state.json"), 'r') as openfile:
-        state = json.load(openfile)
+    with open(os.path.join(trajectory_dir, "state.pickle"), 'rb') as openfile:
+        state = pickle.load(openfile)
 
     # Init the environment
     button_press_goal_observable_cls = ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE["button-press-v2-goal-observable"]

@@ -1,4 +1,5 @@
 import os
+import pickle
 import time
 import numpy as np
 # from sbx import SAC
@@ -7,6 +8,7 @@ from stable_baselines3.common.save_util import load_from_zip_file
 import imageio
 import argparse
 import json
+import mujoco_py
 
 from metaworld.envs import ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE
 
@@ -48,12 +50,12 @@ def main(args):
         os.makedirs(trajectory_dir)
 
     # save state as json
-    with open(os.path.join(trajectory_dir, "state.json" ), 'w') as outfile:
-        print("state")
-        print(state)
-
-        jsonstr = json.dumps(state)
-        outfile.write(jsonstr)
+    with open(os.path.join(trajectory_dir, "state.pickle" ), 'ab') as outfile:
+        # print("state")
+        # print(state)
+        # obj_state = mujoco_py.MjSimState(old_state.time, qpos, qvel,
+                                        #  old_state.act, old_state.udd_state)
+        pickle.dump(state, outfile)     
 
     # run the agent x times
     for i in range(args.num_trajs):
