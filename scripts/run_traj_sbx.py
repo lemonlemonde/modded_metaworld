@@ -36,9 +36,13 @@ def main(args):
     model = SAC("MlpPolicy", eval_env, verbose=1, batch_size=500)
     model.set_parameters(params, exact_match=True, device="auto")
 
-
+    # make sure to save the exact state to replicate between trials and replay
     eval_env.reset()
     state = eval_env.get_env_state()
+
+    # save state as json
+    with open(os.path.join(trajectory_dir, "state.json" ), 'w') as outfile:
+        json.dump(state.tolist(), outfile)
 
     # directory
     trajectory_dir = os.path.join(cur_dir, "../trajectories", args.variant)
@@ -50,7 +54,7 @@ def main(args):
         print("Running trial: " + str(i))
         # save images and state-action pairs
         images = []
-        state_action_pairs = []
+        actions = []
 
         obs = eval_env.reset()
         eval_env.set_env_state(state)
@@ -71,7 +75,7 @@ def main(args):
             # print("pair:")
             # print(pair)
             # print(action)
-            state_action_pairs.append(action.tolist())
+            actions.append(action.tolist())
 
             if done:
                 eval_env.reset()
@@ -80,18 +84,24 @@ def main(args):
 
         imageio.mimsave(os.path.join(trajectory_dir, "button_press_" + str(i) + ".gif"), [np.array(img) for i, img in enumerate(images)], fps=30)
         # save state-action pairs as json
-        with open(os.path.join(trajectory_dir, "state_action_pairs_" + str(i) + ".json"), 'w') as outfile:
+        with open(os.path.join(trajectory_dir, "actions_" + str(i) + ".json"), 'w') as outfile:
             # for action in state_action_pairs:
-            json.dump(state_action_pairs, outfile)
+            json.dump(actions, outfile)
+        
 
 
 
 
     print("Done!")
 
+    # replay the trajectory
     print("Now replay the trajectory:")
 
-    # replay the trajectory
+    # get the state
+    with open(os.path.join(trajectory_dir, "state.json"), 'r') as openfile:
+        state = json.load(openfile)
+
+    
     # get the state-action pairs
     for i in range(args.num_trajs):
         print("replaying trajectory " + str(i))
@@ -99,7 +109,7 @@ def main(args):
         eval_env.set_env_state(state)
         images = []
 
-        with open(os.path.join(trajectory_dir, "state_action_pairs_" + str(i) + ".json"), 'r') as openfile:
+        with open(os.path.join(trajectory_dir, "actions_" + str(i) + ".json"), 'r') as openfile:
             actions = json.load(openfile)
             # replay the trajectory
             # action = pair["action"]
