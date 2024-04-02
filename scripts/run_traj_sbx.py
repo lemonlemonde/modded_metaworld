@@ -101,7 +101,7 @@ def main(args):
 
         # save images as mp4
         for f in range(len(images)):
-            images[f] = cv2.imread(os.path.join(trajectory_dir, "button_press_" + str(i) + str(f) + ".png"))
+            images[f] = cv2.imread(os.path.join(trajectory_dir, "button_press_" + str(i) + "_" + str(f) + ".png"))
         frame = cv2.imread(images[0])
         height, width, layers = frame.shape
 
