@@ -62,28 +62,19 @@ def main(args):
         # imageio.mimsave(os.path.join(trajectory_dir, "replay_" + str(i) + ".gif"), [np.array(img) for i, img in enumerate(images)], fps=30)
                 
         # save each image
+        # save each image
+        # height, width, layers = images[0].shape
+        video = cv2.VideoWriter(os.path.join(trajectory_dir, "replay_" + str(i) + ".mp4"), cv2.VideoWriter_fourcc(*'mp4v'), 1, (640,480))
         for f, img in enumerate(images):
-            cv2.imwrite(os.path.join(trajectory_dir, "button_press_" + str(i) + "_" + str(f) + ".png"), img)
+            video.write(img)
+            # cv2.imwrite(os.path.join(trajectory_dir, "button_press_" + str(i) + "_" + str(f) + ".png"), img)
         # imageio.mimsave(os.path.join(trajectory_dir, "button_press_" + str(i) + ".gif"), [np.array(img) for i, img in enumerate(images)], fps=30)
 
-        # save images as mp4
-        for f in range(len(images)):
-            images[f] = cv2.imread(os.path.join(trajectory_dir, "button_press_" + str(i) + str(f) + ".png"))
-        frame = cv2.imread(images[0])
-        height, width, layers = frame.shape
 
-        video = cv2.VideoWriter("button_press_" + str(i) + ".mp4", 0, 1, (width,height))
-
-        for image in images:
-            video.write(cv2.imread(image))
 
         cv2.destroyAllWindows()
         video.release()
 
-        # delete the images
-        for f in range(len(images)):
-            os.remove(os.path.join(trajectory_dir, "button_press_" + str(i) + "_" + str(f) + ".png"))
-    
     print("Done replaying trajectories!")
 
 
