@@ -8,20 +8,17 @@ from stable_baselines3.common.save_util import load_from_zip_file
 import imageio
 import argparse
 import json
+import cv2
 
 from metaworld.envs import ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE
 
 def main(args):    
     # replay the trajectory
-    print("Now replay the trajectory:")
+    print("Replaying trajectories")
 
     # directory
     cur_dir = os.path.dirname(os.path.abspath(__file__))
     trajectory_dir = os.path.join(cur_dir, "../trajectories", args.variant)
-
-    # get the saved state to replay
-    with open(os.path.join(trajectory_dir, "state.pickle"), 'rb') as openfile:
-        state = pickle.load(openfile)
 
     # Init the environment
     button_press_goal_observable_cls = ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE["button-press-v2-goal-observable"]
@@ -41,7 +38,12 @@ def main(args):
     
     # get the state-action pairs
     for i in range(args.num_trajs):
-        print("replaying trajectory " + str(i))
+        print("Replaying trajectory " + str(i) + "...")
+ 
+        # get the saved state to replay
+        with open(os.path.join(trajectory_dir, "state_" + str(i) + ".pickle"), 'rb') as openfile:
+            state = pickle.load(openfile)
+
         eval_env.reset()
         eval_env.set_env_state(state)
         images = []
@@ -57,7 +59,21 @@ def main(args):
                 img = eval_env.render(offscreen=True)
                 images.append(img)
 
-        imageio.mimsave(os.path.join(trajectory_dir, "replay_" + str(i) + ".gif"), [np.array(img) for i, img in enumerate(images)], fps=30)
+        # imageio.mimsave(os.path.join(trajectory_dir, "replay_" + str(i) + ".gif"), [np.array(img) for i, img in enumerate(images)], fps=30)
+                
+        # save images as mp4
+        frame = cv2.imread(images[0])
+        height, width, layers = frame.shape
+
+        video = cv2.VideoWriter("replay_" + str(i) + ".mp4", 0, 1, (width,height))
+
+        for image in images:
+            video.write(cv2.imread(image)))
+
+        cv2.destroyAllWindows()
+        video.release()
+    
+    print("Done replaying trajectories!")
 
 
 

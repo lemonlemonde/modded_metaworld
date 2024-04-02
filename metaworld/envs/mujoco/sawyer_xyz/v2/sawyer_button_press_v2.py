@@ -170,11 +170,14 @@ class SawyerButtonPressEnvV2(SawyerXYZEnv):
         tcp_vel = reward_utils.combined_velocity(cur[0], cur[1], cur[2], self.prev[0], self.prev[1], self.prev[2])
         # print("tcp: ", tcp)
 
-        # distance to button
+        # distance of end effector to button
         tcp_to_obj = np.linalg.norm(obj - tcp)
 
         # avg sum of that
         avg_sum = (tcp_height + tcp_vel + tcp_to_obj) / 3
+
+        # TODO: (not yet used) distance of button to target location (pushed in)
+        obj_to_target = abs(self._target_pos[1] - obj[1])
 
         # update
         self.prev = tcp

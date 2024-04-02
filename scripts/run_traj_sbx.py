@@ -16,6 +16,8 @@ from metaworld.envs import ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE
 import scripts.replay_traj_sbx as replay
 
 def main(args):
+    print("Running trajectories")
+
     # Init the environment
     button_press_goal_observable_cls = ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE["button-press-v2-goal-observable"]
     eval_env = button_press_goal_observable_cls()
@@ -52,7 +54,7 @@ def main(args):
 
     # run the agent x times
     for i in range(args.num_trajs):
-        print("Running trial: " + str(i))
+        print("Running trial: " + str(i) + "...")
         # save images and state-action pairs
         images = []
         actions = []
@@ -113,7 +115,7 @@ def main(args):
             json.dump(actions, outfile)
         
 
-    print("Done!")
+    print("Done running trajectories!")
 
     if (args.run_replay):
         replay.main(args)
