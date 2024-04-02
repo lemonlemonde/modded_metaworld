@@ -9,6 +9,7 @@ import imageio
 import argparse
 import json
 import mujoco_py
+import cv2
 
 from metaworld.envs import ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE
 
@@ -40,22 +41,14 @@ def main(args):
     model = SAC("MlpPolicy", eval_env, verbose=1, batch_size=500)
     model.set_parameters(params, exact_match=True, device="auto")
 
-    # make sure to save the exact state to replicate between trials and replay
-    eval_env.reset()
-    state = eval_env.get_env_state()
+    
 
     # directory
     trajectory_dir = os.path.join(cur_dir, "../trajectories", args.variant)
     if (os.path.exists(trajectory_dir) == False):
         os.makedirs(trajectory_dir)
 
-    # save state as json
-    with open(os.path.join(trajectory_dir, "state.pickle" ), 'ab') as outfile:
-        # print("state")
-        # print(state)
-        # obj_state = mujoco_py.MjSimState(old_state.time, qpos, qvel,
-                                        #  old_state.act, old_state.udd_state)
-        pickle.dump(state, outfile)     
+        
 
     # run the agent x times
     for i in range(args.num_trajs):
@@ -64,8 +57,18 @@ def main(args):
         images = []
         actions = []
 
+        # make sure to save the exact state to replicate between trials and replay
         obs = eval_env.reset()
-        eval_env.set_env_state(state)
+        state = eval_env.get_env_state()
+
+        # save state as json
+        with open(os.path.join(trajectory_dir, "state_" + str(i) + ".pickle" ), 'ab') as outfile:
+            # print("state")
+            # print(state)
+            # obj_state = mujoco_py.MjSimState(old_state.time, qpos, qvel,
+                                            #  old_state.act, old_state.udd_state)
+            pickle.dump(state, outfile)
+
         img = eval_env.render(offscreen=True)
         # img = eval_env.render()
         images.append(img)
@@ -90,7 +93,20 @@ def main(args):
                 break
 
 
-        imageio.mimsave(os.path.join(trajectory_dir, "button_press_" + str(i) + ".gif"), [np.array(img) for i, img in enumerate(images)], fps=30)
+        # imageio.mimsave(os.path.join(trajectory_dir, "button_press_" + str(i) + ".gif"), [np.array(img) for i, img in enumerate(images)], fps=30)
+
+        # save images as mp4
+        frame = cv2.imread(images[0])
+        height, width, layers = frame.shape
+
+        video = cv2.VideoWriter("button_press_" + str(i) + ".mp4", 0, 1, (width,height))
+
+        for image in images:
+            video.write(cv2.imread(image)))
+
+        cv2.destroyAllWindows()
+        video.release()
+
         # save state-action pairs as json
         with open(os.path.join(trajectory_dir, "actions_" + str(i) + ".json"), 'w') as outfile:
             # for action in state_action_pairs:
