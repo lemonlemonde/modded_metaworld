@@ -64,7 +64,9 @@ def main(args):
         state = eval_env.get_env_state()
 
         # save state as json
-        np.save(os.path.join(trajectory_dir, "state_" + str(i) + ".npy"), state)
+        with open(os.path.join(trajectory_dir, "state_" + str(i) + ".json"), 'w') as openfile:
+            json.dump(state, openfile)
+        # np.save(os.path.join(trajectory_dir, "state_" + str(i) + ".npy"), state)
 
         img = eval_env.render(offscreen=True)
         images.append(img)
@@ -83,7 +85,9 @@ def main(args):
                 break
 
         # save state-action pairs as json
-        np.save(os.path.join(trajectory_dir, "actions_" + str(i) + ".npy"), actions)
+        with open(os.path.join(trajectory_dir, "actions_" + str(i) + ".json"), 'w') as openfile:
+            json.dump(actions, openfile)
+        # np.save(os.path.join(trajectory_dir, "actions_" + str(i) + ".npy"), actions)
 
         # save images as npy
         image_dir = os.path.join(trajectory_dir, "images_" + str(i))

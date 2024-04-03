@@ -40,18 +40,23 @@ def main(args):
     for i in range(args.num_trajs):
         print("Replaying trajectory " + str(i) + "...")
  
-        # get the saved state to replay
-        state = np.load(os.path.join(trajectory_dir, "state_" + str(i) + ".npy"))
-        eval_env.reset()
-        eval_env.set_env_state(state)
+        # get the saved state json to replay
+        with open(os.path.join(trajectory_dir, "state_" + str(i) + ".json"), 'r') as openfile:
+            state = json.load(openfile)
+        
+        # state = np.load(os.path.join(trajectory_dir, "state_" + str(i) + ".npy"))
+            eval_env.reset()
+            eval_env.set_env_state(state)
         images = []
 
         # get the saved actions to replay
-        actions = np.load(os.path.join(trajectory_dir, "actions_" + str(i) + ".npy"))
-        for action in actions:
-            eval_env.step(np.array(action))
-            img = eval_env.render(offscreen=True)
-            images.append(img)
+        # actions = np.load(os.path.join(trajectory_dir, "actions_" + str(i) + ".npy"))
+        with open(os.path.join(trajectory_dir, "actions_" + str(i) + ".json"), 'r') as openfile:
+            actions = json.load(openfile)
+            for action in actions:
+                eval_env.step(np.array(action))
+                img = eval_env.render(offscreen=True)
+                images.append(img)
 
         # save images as npy
         image_dir = os.path.join(trajectory_dir, "replay_images_" + str(i))
