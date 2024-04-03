@@ -72,7 +72,7 @@ def main(args):
         # make video
         frame = cv2.imread(os.path.join(image_dir, "img_" + str(i) + "_0.png"))
         height, width, layers = frame.shape
-        video = cv2.VideoWriter(os.path.join(image_dir, "replay_" + str(i) + ".mp4"), cv2.VideoWriter_fourcc(*'mp4v'), 15, (width,height))
+        video = cv2.VideoWriter(os.path.join(image_dir, "replay_" + str(i) + ".mp4"), cv2.VideoWriter_fourcc(*'mp4v'), 30, (width,height))
         for f, _ in enumerate(images):
             video.write(cv2.imread(os.path.join(image_dir, "img_" + str(i) + "_" + str(f) + ".png")))
             os.remove(os.path.join(image_dir, "img_" + str(i) + "_" + str(f) + ".png"))
