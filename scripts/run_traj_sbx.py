@@ -64,15 +64,9 @@ def main(args):
         state = eval_env.get_env_state()
 
         # save state as json
-        with open(os.path.join(trajectory_dir, "state_" + str(i) + ".pickle" ), 'ab') as outfile:
-            # print("state")
-            # print(state)
-            # obj_state = mujoco_py.MjSimState(old_state.time, qpos, qvel,
-                                            #  old_state.act, old_state.udd_state)
-            pickle.dump(state, outfile)
+        np.save(os.path.join(trajectory_dir, "state_" + str(i) + ".npy"), state)
 
         img = eval_env.render(offscreen=True)
-        # img = eval_env.render()
         images.append(img)
 
         # 500 timesteps
@@ -81,37 +75,41 @@ def main(args):
             obs, reward, done, info = eval_env.step(action)
 
             img = eval_env.render(offscreen=True)
-            # img = eval_env.render()
             images.append(img)
-
-            # pair = {"action": action}
-            # print("pair:")
-            # print(pair)
-            # print(action)
             actions.append(action.tolist())
 
             if done:
                 eval_env.reset()
                 break
 
-        # save each image
-        # height, width, layers = images[0].shape
-        video = cv2.VideoWriter(os.path.join(trajectory_dir, "button_press_" + str(i) + ".mp4"), cv2.VideoWriter_fourcc(*'mp4v'), 1, (640,480))
-        for f, img in enumerate(images):
-            video.write(img)
-            # cv2.imwrite(os.path.join(trajectory_dir, "button_press_" + str(i) + "_" + str(f) + ".png"), img)
-        # imageio.mimsave(os.path.join(trajectory_dir, "button_press_" + str(i) + ".gif"), [np.array(img) for i, img in enumerate(images)], fps=30)
+        # save state-action pairs as json
+        np.save(os.path.join(trajectory_dir, "actions_" + str(i) + ".npy"), actions)
 
+        # save images as npy
+        image_dir = os.path.join(trajectory_dir, "images_" + str(i))
+        np.save(os.path.join(image_dir, "images_" + str(i) + ".npy"), images)
 
+        # save images as pngs to make a video
+        for f, img in images:
+            cv2.imwrite(os.path.join(image_dir, "img_" + str(i) + "_" + str(f) + ".png"), img)
+
+        # make video
+        images = [img for img in os.listdir(image_dir) if img.endswith(".png")]
+        frame = cv2.imread(os.path.join(image_dir, images[0]))
+        height, width, layers = frame.shape
+        video = cv2.VideoWriter("button_press_" + str(i) + ".mp4", cv2.VideoWriter_fourcc(*'XVID'), 30, (width,height))
+        for image in images:
+            video.write(cv2.imread(os.path.join(image_dir, image)))
 
         cv2.destroyAllWindows()
         video.release()
 
+        # deletee images
+        # for f, img in images:
+        #     os.remove(os.path.join(image_dir, "img_" + str(i) + "_" + str(f) + ".png"))
 
-        # save state-action pairs as json
-        with open(os.path.join(trajectory_dir, "actions_" + str(i) + ".json"), 'w') as outfile:
-            # for action in state_action_pairs:
-            json.dump(actions, outfile)
+
+       
         
 
     print("Done running trajectories!")
