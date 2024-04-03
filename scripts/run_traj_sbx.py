@@ -63,9 +63,9 @@ def main(args):
         obs = eval_env.reset()
         state = eval_env.get_env_state()
 
-        # save state as json
-        with open(os.path.join(trajectory_dir, "state_" + str(i) + ".json"), 'w') as openfile:
-            json.dump(state, openfile)
+        # save state as pickle
+        with open(os.path.join(trajectory_dir, "state_" + str(i) + ".pickle" ), 'ab') as outfile:
+            pickle.dump(state, outfile)
         # np.save(os.path.join(trajectory_dir, "state_" + str(i) + ".npy"), state)
 
         img = eval_env.render(offscreen=True)
@@ -91,28 +91,24 @@ def main(args):
 
         # save images as npy
         image_dir = os.path.join(trajectory_dir, "images_" + str(i))
+        if (os.path.exists(image_dir) == False):
+            os.makedirs(image_dir)
         np.save(os.path.join(image_dir, "images_" + str(i) + ".npy"), images)
 
         # save images as pngs to make a video
-        for f, img in images:
+        for f, img in enumerate(images):
             cv2.imwrite(os.path.join(image_dir, "img_" + str(i) + "_" + str(f) + ".png"), img)
 
         # make video
-        images = [img for img in os.listdir(image_dir) if img.endswith(".png")]
-        frame = cv2.imread(os.path.join(image_dir, images[0]))
+        frame = cv2.imread(os.path.join(image_dir, "img_" + str(i) + "_0.png"))
         height, width, layers = frame.shape
-        video = cv2.VideoWriter("button_press_" + str(i) + ".mp4", cv2.VideoWriter_fourcc(*'XVID'), 30, (width,height))
-        for image in images:
-            video.write(cv2.imread(os.path.join(image_dir, image)))
+        video = cv2.VideoWriter(os.path.join(image_dir, "button_press_" + str(i) + ".mp4"), cv2.VideoWriter_fourcc(*'mp4v'), 30, (width,height))
+        for f, _ in enumerate(images):
+            video.write(cv2.imread(os.path.join(image_dir, "img_" + str(i) + "_" + str(f) + ".png")))
+            os.remove(os.path.join(image_dir, "img_" + str(i) + "_" + str(f) + ".png"))
 
         cv2.destroyAllWindows()
         video.release()
-
-        # deletee images
-        # for f, img in images:
-        #     os.remove(os.path.join(image_dir, "img_" + str(i) + "_" + str(f) + ".png"))
-
-
        
         
 

@@ -41,12 +41,12 @@ def main(args):
         print("Replaying trajectory " + str(i) + "...")
  
         # get the saved state json to replay
-        with open(os.path.join(trajectory_dir, "state_" + str(i) + ".json"), 'r') as openfile:
-            state = json.load(openfile)
+        with open(os.path.join(trajectory_dir, "state_" + str(i) + ".pickle"), 'rb') as openfile:
+            state = pickle.load(openfile)
         
         # state = np.load(os.path.join(trajectory_dir, "state_" + str(i) + ".npy"))
-            eval_env.reset()
-            eval_env.set_env_state(state)
+        eval_env.reset()
+        eval_env.set_env_state(state)
         images = []
 
         # get the saved actions to replay
@@ -60,28 +60,25 @@ def main(args):
 
         # save images as npy
         image_dir = os.path.join(trajectory_dir, "replay_images_" + str(i))
+        if (os.path.exists(image_dir) == False):
+            os.makedirs(image_dir)
         np.save(os.path.join(image_dir, "replay_images_" + str(i) + ".npy"), images)
 
         # save images as pngs to make a video
-        for f, img in images:
+        for f, img in enumerate(images):
             cv2.imwrite(os.path.join(image_dir, "img_" + str(i) + "_" + str(f) + ".png"), img)
 
 
-        images = [img for img in os.listdir(image_dir) if img.endswith(".png")]
-        frame = cv2.imread(os.path.join(image_dir, images[0]))
+        # make video
+        frame = cv2.imread(os.path.join(image_dir, "img_" + str(i) + "_0.png"))
         height, width, layers = frame.shape
-
-        video = cv2.VideoWriter("replay_" + str(i) + ".mp4", cv2.VideoWriter_fourcc(*'XVID'), 30, (width,height))
-
-        for image in images:
-            video.write(cv2.imread(os.path.join(image_dir, image)))
+        video = cv2.VideoWriter(os.path.join(image_dir, "replay_" + str(i) + ".mp4"), cv2.VideoWriter_fourcc(*'mp4v'), 15, (width,height))
+        for f, _ in enumerate(images):
+            video.write(cv2.imread(os.path.join(image_dir, "img_" + str(i) + "_" + str(f) + ".png")))
+            os.remove(os.path.join(image_dir, "img_" + str(i) + "_" + str(f) + ".png"))
 
         cv2.destroyAllWindows()
         video.release()
-
-        # deletee images
-        # for f, img in images:
-        #     os.remove(os.path.join(image_dir, "img_" + str(i) + "_" + str(f) + ".png"))
 
 
     print("Done replaying trajectories!")
