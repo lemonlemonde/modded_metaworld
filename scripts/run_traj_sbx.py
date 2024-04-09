@@ -89,11 +89,11 @@ def main(args):
             json.dump(actions, openfile)
         # np.save(os.path.join(trajectory_dir, "actions_" + str(i) + ".npy"), actions)
 
-        # save images as npy
+        # # save images as npy
         image_dir = os.path.join(trajectory_dir, "images_" + str(i))
-        if (os.path.exists(image_dir) == False):
-            os.makedirs(image_dir)
-        np.save(os.path.join(image_dir, "images_" + str(i) + ".npy"), images)
+        # if (os.path.exists(image_dir) == False):
+        #     os.makedirs(image_dir)
+        # np.save(os.path.join(image_dir, "images_" + str(i) + ".npy"), images)
 
         # save images as pngs to make a video
         for f, img in enumerate(images):
