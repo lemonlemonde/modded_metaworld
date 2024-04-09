@@ -21,17 +21,17 @@ features = ['height', 'velocity', 'distance_to_object', 'sum']
 # default 500, will be ovewritten by num columnns in actions.json
 NUM_TIMESTEPS = 500
 
-# TODO: CHANGE THIS TO ACTUAL ADJECTIVES
-greater_height_adjs = ["taller"]
-greater_velocity_adjs = ["faster"]
-greater_distance_adjs = ["farther"]
-greater_sum_adjs = ["better"]
+# small dataset for testing, use GPT_augmented_dataset later for full dataset
+greater_height_adjs = ["Move higher.", "Move taller.", "Move at a greater height."]
+greater_velocity_adjs = ["Move faster.", "Move quicker.", "Move swifter.", "Move at a higher speed."]
+greater_distance_adjs = ["Move further from the button.", "Move farther from the button.", "Move more distant from the button."]
+greater_sum_adjs = ["Press the button better.", "Press the button more successfully."]
 greater_adjs = [greater_height_adjs] + [greater_velocity_adjs] + [greater_distance_adjs] + [greater_sum_adjs]
 
-lesser_height_adjs = ["shorter"]
-lesser_velocity_adjs = ["slower"]
-lesser_distance_adjs = ["closer"]
-lesser_sum_adjs = ["worse"]
+lesser_height_adjs = ["Move lower.", "Move more down.", "Move at a lesser height."]
+lesser_velocity_adjs = ["Move slower.", "Move more moderate.", "Move more sluggish.", "Move at a lower speed."]
+lesser_distance_adjs = ["Move closer to the button.", "Move nearer to the button.", "Move more nearby to the button."]
+lesser_sum_adjs = ["Press the button worse.", "Press the button not as well."]
 lesser_adjs = [lesser_height_adjs] + [lesser_velocity_adjs] + [lesser_distance_adjs] + [lesser_sum_adjs]
 
 # calculates the feature values for all trajectories based on compute_reward_v2()
