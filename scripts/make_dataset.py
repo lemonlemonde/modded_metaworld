@@ -36,7 +36,9 @@ lesser_adjs = [lesser_height_adjs] + [lesser_velocity_adjs] + [lesser_distance_a
 
 # calculates the feature values for all trajectories based on compute_reward_v2()
 def calc_feature_vals():
+    print("*****Calculating feature vals*****")
     f_vals = []
+    flag = False
     for traj in trajs:
         avg_sum_vals = []
         height_vals = []
@@ -44,8 +46,25 @@ def calc_feature_vals():
         distance_to_obj_vals = []
         for step in range(0, NUM_TIMESTEPS):
             # compute_reward_v2(action, observation)
-            # traj = [observation, action]
-            reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj, env_state = env.compute_reward_v2(traj[NUM_TIMESTEPS + step], traj[step])
+            # traj = [observation(shape 39), action(4)]
+            reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj, env_state = env.compute_reward_v2(traj[step][40:], traj[step][:39])
+            
+            if (not flag):
+                print("observation: ")
+                print(traj[step][:39])
+                print(traj[step][:39].shape)
+                print("action:")
+                print(traj[step][40:])
+                print(traj[step][40:].shape)
+
+                print("computed reward: ")
+                print(avg_sum)
+                print(tcp_height)
+                print(tcp_vel)
+                print(tcp_to_obj)
+                print("------")
+                flag = True
+            
             avg_sum_vals.append(avg_sum)
             height_vals.append(tcp_height)
             velocity_vals.append(tcp_vel)
@@ -56,21 +75,23 @@ def calc_feature_vals():
 
 # reads states and actions from files and returns them as a list of trajectories (observations + actions)
 def form_trajectories():
+    print("*****Forming trajectories = (observations + actions)*****")
     # trajectories/0-0-0-0/actions_0.json
-    # trajectories/0-0-0-0/state_0.pickle
+    # trajectories/0-0-0-0/states_0.pickle
     temp = []
+    flag = False
 
     # e.g., 0-0-0-0
     for variant in index_weights:
-        # 0 to 4
-        for trial in range(0, 5):
+        # 0 to 3
+        for trial in range(0, 4):
             cur_dir = os.path.dirname(os.path.abspath(__file__))
             dir = os.path.join(cur_dir, "../trajectories", variant)
 
             # load saved states and actions
             with open(os.path.join(dir, "actions_" + str(trial) + ".json"), 'r') as openfile:
                 actions = json.load(openfile)
-            with open(os.path.join(dir, "state_" + str(trial) + ".pickle"), 'rb') as openfile:
+            with open(os.path.join(dir, "states_" + str(trial) + ".pickle"), 'rb') as openfile:
                 states = pickle.load(openfile)
 
             # Get the observations
@@ -81,12 +102,28 @@ def form_trajectories():
                 obs = env._get_obs()
                 observations.append(obs)
                 # env.compute_reward_v2(actions[step], obs)
+            
 
             observations = np.array(observations)
             actions = np.array(actions)
             traj = np.concatenate((observations, actions), axis=-1)
             temp.append(traj)
+            if (not flag):
+                print("observation: ")
+                print(observations)
+                print(observations.shape)
+                print("actions: " )
+                print(actions)
+                print(actions.shape)
+                print("traj:")
+                print(traj)
+                print(traj.shape)
+                flag = True
 
+    print("example temp[0]")
+    print(temp[0])
+    print(temp[0].shape)
+    print(temp[0][400][0])
     return temp
 
 # i, j = indices of traj in order of ["0-0-0-0", "0-0-0-1", ... "2-2-2-2"]
@@ -148,9 +185,7 @@ def get_comparisons(i, j, noisy=False):
 def initialize_globals():
     global env, trajs, feature_vals, index_weights
 
-    # init trajs and feature_vals
-    trajs = form_trajectories()
-    feature_vals = calc_feature_vals()
+    print("***Initializing global variables***")
 
     # init index_weights
     # Get all possible weights "0-0-0-0", "0-0-0-1", ... "2-2-2-2
@@ -160,10 +195,21 @@ def initialize_globals():
                 for sum in range(3):
                     index_weights.append(str(height) + "-" + str(vel) + "-" + str(dist) + "-" + str(sum))
 
+
     # init env
     button_press_goal_observable_cls = ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE["button-press-v2-goal-observable"]
     env = button_press_goal_observable_cls()
     env._freeze_rand_vec = False
+
+    # init trajs and feature_vals
+    trajs = form_trajectories()
+    feature_vals = calc_feature_vals()
+
+    print("trajs:")
+    # print(trajs)
+    print("feature vals:")
+    # print(feature_vals)
+
 
 # generate traj a's, traj b's, and comparisons from a --> b
 def generate_dataset(noisy=False, id_mapping=False, all_pairs=True):
@@ -172,7 +218,7 @@ def generate_dataset(noisy=False, id_mapping=False, all_pairs=True):
     dataset_traj_bs = []
     dataset_comps = []
 
-    if (all_pairs)
+    if (all_pairs):
         # all pairs where trajs = (0-0-0-0, ..., 2-2-2-2) each with 4 trials, as specified for run_traj_sbx.py
         for i in range(0, len(trajs)):
             for j in range(i + 1, len(trajs)):
@@ -243,7 +289,7 @@ if __name__ == '__main__':
     # parser.add_argument('--val-split', type=float, default=0.1, help='')
     # parser.add_argument('--with-videos', action="store_true", help='')
     # parser.add_argument('--use-img-obs', action="store_true", help='')
-    parser.add_argument('--noise-augmentation', type=int, default=0, help='')
+    parser.add_argument('--noise-augmentation', type=bool, default=False, help='')
     parser.add_argument('--id-mapping', action="store_true", help='')
     parser.add_argument('--all-pairs', action="store_true", help='')
     parser.add_argument('--seed', type=int, default=0, help='')

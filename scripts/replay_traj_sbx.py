@@ -41,12 +41,12 @@ def main(args):
         print("Replaying trajectory " + str(i) + "...")
  
         # get the saved state json to replay
-        with open(os.path.join(trajectory_dir, "state_" + str(i) + ".pickle"), 'rb') as openfile:
-            state = pickle.load(openfile)
+        with open(os.path.join(trajectory_dir, "states_" + str(i) + ".pickle"), 'rb') as openfile:
+            states = pickle.load(openfile)
         
         # state = np.load(os.path.join(trajectory_dir, "state_" + str(i) + ".npy"))
         eval_env.reset()
-        eval_env.set_env_state(state)
+        eval_env.set_env_state(states[0])
         images = []
 
         # get the saved actions to replay
@@ -60,8 +60,8 @@ def main(args):
 
         # # save images as npy
         image_dir = os.path.join(trajectory_dir, "replay_images_" + str(i))
-        # if (os.path.exists(image_dir) == False):
-        #     os.makedirs(image_dir)
+        if (os.path.exists(image_dir) == False):
+            os.makedirs(image_dir)
         # np.save(os.path.join(image_dir, "replay_images_" + str(i) + ".npy"), images)
 
         # save images as pngs to make a video

@@ -58,15 +58,12 @@ def main(args):
         # save images and state-action pairs
         images = []
         actions = []
+        states = []
 
         # make sure to save the exact state to replicate between trials and replay
         obs = eval_env.reset()
         state = eval_env.get_env_state()
-
-        # save state as pickle
-        with open(os.path.join(trajectory_dir, "state_" + str(i) + ".pickle" ), 'ab') as outfile:
-            pickle.dump(state, outfile)
-        # np.save(os.path.join(trajectory_dir, "state_" + str(i) + ".npy"), state)
+        states.append(state)
 
         img = eval_env.render(offscreen=True)
         images.append(img)
@@ -78,6 +75,8 @@ def main(args):
 
             img = eval_env.render(offscreen=True)
             images.append(img)
+            state = eval_env.get_env_state()
+            states.append(state)
             actions.append(action.tolist())
 
             if done:
@@ -89,10 +88,15 @@ def main(args):
             json.dump(actions, openfile)
         # np.save(os.path.join(trajectory_dir, "actions_" + str(i) + ".npy"), actions)
 
+        # save states as pickle
+        with open(os.path.join(trajectory_dir, "states_" + str(i) + ".pickle" ), 'ab') as outfile:
+            pickle.dump(states, outfile)
+        # np.save(os.path.join(trajectory_dir, "state_" + str(i) + ".npy"), state)
+
         # # save images as npy
         image_dir = os.path.join(trajectory_dir, "images_" + str(i))
-        # if (os.path.exists(image_dir) == False):
-        #     os.makedirs(image_dir)
+        if (os.path.exists(image_dir) == False):
+            os.makedirs(image_dir)
         # np.save(os.path.join(image_dir, "images_" + str(i) + ".npy"), images)
 
         # save images as pngs to make a video
