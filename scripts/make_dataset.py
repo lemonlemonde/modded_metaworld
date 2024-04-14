@@ -41,7 +41,7 @@ lesser_adjs = [lesser_height_adjs] + [lesser_velocity_adjs] + [lesser_distance_a
     # actions = (500, 4) for 500 timesteps
 # also calculates feature values for each trajectory and returns them
 def form_trajectories():
-    print("*****Forming trajectories = (observations + actions)*****")
+    print("\t-->>-- Forming Trajectories --<<--")
     
     formatted_trajs = []
     f_vals = []
@@ -145,7 +145,7 @@ def get_comparisons(i, j, noisy=False):
 def initialize_globals():
     global env, trajs, feature_vals, index_weights
 
-    print("*****Initializing global variables*****")
+    print("\t-->>-- Initializing Global Variables! --<<--")
 
     # init index_weights
     # Get all possible weights "0-0-0-0", "0-0-0-1", ... "2-2-2-2
@@ -167,14 +167,14 @@ def initialize_globals():
 
 # generate traj a's, traj b's, and comparisons from a --> b
 def generate_dataset(noisy=False, id_mapping=False, all_pairs=True):
-    print("*****Generating Dataset*****")
+    
     # a --> b with language feedback comps
     dataset_traj_as = []
     dataset_traj_bs = []
     dataset_comps = []
 
     if (all_pairs):
-        print("**generating all pairs...***")
+        print("\t-->>-- Generating Dataset (all pairs)! --<<--")
         # all pairs where trajs = (0-0-0-0, ..., 2-2-2-2) each with 4 trials, as specified for run_traj_sbx.py
         for i in range(0, len(trajs)):
             for j in range(i + 1, len(trajs)):
@@ -201,7 +201,7 @@ def generate_dataset(noisy=False, id_mapping=False, all_pairs=True):
                         dataset_comps.append(fc)
                     
     else:
-        print("***generating random pairs...***")
+        print("\t-->>-- Generating Dataset (random pairs)! --<<--")
         # random pairs
         for n in range(0, len(trajs)):
             i = 0
@@ -236,6 +236,7 @@ def generate_dataset(noisy=False, id_mapping=False, all_pairs=True):
 
 
 if __name__ == '__main__':
+    print("-->>-->>-- Making dataset! --<<--<<--")
     parser = argparse.ArgumentParser(description='')
 
     # parser.add_argument('--policy-dir', type=str, default='', help='')
@@ -272,6 +273,11 @@ if __name__ == '__main__':
     # save dataset
         # 324 trajs (81 variants x 4 trials each)
         # 500 timesteps
+        # 418608 is from:
+            # (81 variants x 4 trials each) = 324
+            # 324 choose 2 (i-->j) = 52326
+            # 52326 x 4 features = 209304
+            # 209304 x 2 for flipped order (j-->i) = 418608
         # dataset_traj_as.npy: 
             # contains indices or trajectories (observations + actions)
             # e.g., [0, 0, 0, 0, 1, ..., 322, 322, 322, 322]
@@ -289,3 +295,27 @@ if __name__ == '__main__':
     np.save(os.path.join(dir, "dataset_traj_as.npy"), np.array(dataset_traj_as))
     np.save(os.path.join(dir, "dataset_traj_bs.npy"), np.array(dataset_traj_bs))
     np.save(os.path.join(dir, "dataset_comps.npy"), np.array(dataset_comps))
+
+    print("-->>-->>-- Done making dataset!!! --<<--<<--")
+
+    # open np files and check
+    print("-->>-->>-- Checking saved files... --<<--<<--")
+    print("dataset_traj_as:")
+    traj_as = np.load(os.path.join(dir, "dataset_traj_as.npy"))
+    print(traj_as)
+    print(traj_as.shape)
+    # for i in range(0, 17):
+    #     print(traj_as[i])
+
+    print("dataset_traj_bs:")
+    traj_bs = np.load(os.path.join(dir, "dataset_traj_bs.npy"))
+    print(traj_bs)
+    print(traj_bs.shape)
+    # for i in range(0, 17):
+    #     print(traj_bs[i])
+
+    print("dataset_comps:")
+    comps = np.load(os.path.join(dir, "dataset_comps.npy"))
+    print(comps)
+    print(comps.shape)
+    print("-->>-->>-- Check ^^^ everything looks okay?? --<<--<<--")
