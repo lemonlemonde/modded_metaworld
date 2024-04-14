@@ -34,57 +34,26 @@ lesser_distance_adjs = ["Move closer to the button.", "Move nearer to the button
 lesser_sum_adjs = ["Press the button worse.", "Press the button not as well."]
 lesser_adjs = [lesser_height_adjs] + [lesser_velocity_adjs] + [lesser_distance_adjs] + [lesser_sum_adjs]
 
-# calculates the feature values for all trajectories based on compute_reward_v2()
-def calc_feature_vals():
-    print("*****Calculating feature vals*****")
-    f_vals = []
-    flag = False
-    for trajIndex, traj in enumerate(trajs):
-        avg_sum_vals = []
-        height_vals = []
-        velocity_vals = []
-        distance_to_obj_vals = []
-        for step in range(0, NUM_TIMESTEPS):
-            # compute_reward_v2(action, observation)
-            # traj = [observation(shape 39), action(4)]
-            reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj, env_state = env.compute_reward_v2(traj[step][39:], traj[step][:39])
-            
-            print("computed reward: ")
-            print(avg_sum)
-            print(tcp_height)
-            print(tcp_vel)
-            print(tcp_to_obj)
-            print("------")
-            if (trajIndex == 24 and step == 300):
-                # print("observation: ")
-                # print(traj[step][:39])
-                # print(traj[step][:39].shape)
-                # print("action:")
-                # print(traj[step][39:])
-                # print(traj[step][39:].shape)
-
-                
-                flag = True
-            
-            avg_sum_vals.append(avg_sum)
-            height_vals.append(tcp_height)
-            velocity_vals.append(tcp_vel)
-            distance_to_obj_vals.append(tcp_to_obj)
-        f_vals.append([height_vals] + [velocity_vals] + [distance_to_obj_vals] + [avg_sum_vals])
-
-    return f_vals
 
 # reads states and actions from files and returns them as a list of trajectories (observations + actions)
+# also calculates feature values for each trajectory and returns them
 def form_trajectories():
     print("*****Forming trajectories = (observations + actions)*****")
     # trajectories/0-0-0-0/actions_0.json
     # trajectories/0-0-0-0/states_0.pickle
-    temp = []
-    flag = True
+    formatted_trajs = []
+    flag = False
+
+    f_vals = []
 
     # e.g., 0-0-0-0
     for variant in index_weights:
         # 0 to 3
+        avg_sum_vals = []
+        height_vals = []
+        velocity_vals = []
+        distance_to_obj_vals = []
+
         for trial in range(0, 4):
             cur_dir = os.path.dirname(os.path.abspath(__file__))
             dir = os.path.join(cur_dir, "../trajectories", variant)
@@ -103,30 +72,44 @@ def form_trajectories():
                 obs = env._get_obs()
                 observations.append(obs)
                 # env.compute_reward_v2(actions[step], obs)
+                reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj, env_state = env.compute_reward_v2(actions[step], obs)
+                
+                if (not flag and step == 30):
+                    print("computed reward: ")
+                    print(avg_sum)
+                    print(tcp_height)
+                    print(tcp_vel)
+                    print(tcp_to_obj)
+                    print("------")
+                
+                avg_sum_vals.append(avg_sum)
+                height_vals.append(tcp_height)
+                velocity_vals.append(tcp_vel)
+                distance_to_obj_vals.append(tcp_to_obj)
             
-
             observations = np.array(observations)
             actions = np.array(actions)
             traj = np.concatenate((observations, actions), axis=-1)
-            temp.append(traj)
-            if (not flag):
-                print("observation: ")
-                print(observations)
-                print(observations.shape)
-                print("actions: " )
-                print(actions)
-                print(actions.shape)
-                print("traj:")
-                print(traj)
-                print(traj.shape)
-                flag = True
+            formatted_trajs.append(traj)
+            # if (not flag):
+            #     print("observation: ")
+            #     print(observations)
+            #     print(observations.shape)
+            #     print("actions: " )
+            #     print(actions)
+            #     print(actions.shape)
+            #     print("traj:")
+            #     print(traj)
+            #     print(traj.shape)
+            #     flag = True
 
+        f_vals.append([height_vals] + [velocity_vals] + [distance_to_obj_vals] + [avg_sum_vals])
     # print("example temp[0]")
     # print(temp[0])
     # print(temp[0].shape)
     # print(temp[0][400][0])
     print("NUM_TIMESTEPS: " + str(NUM_TIMESTEPS))
-    return temp
+    return formatted_trajs, f_vals
 
 # i, j = indices of traj in order of ["0-0-0-0", "0-0-0-1", ... "2-2-2-2"]
 # feature = {'height', 'velocity', 'distance_to_object', 'sum'}
@@ -204,8 +187,7 @@ def initialize_globals():
     env._freeze_rand_vec = False
 
     # init trajs and feature_vals
-    trajs = form_trajectories()
-    feature_vals = calc_feature_vals()
+    trajs, feature_vals = form_trajectories()
 
     # print("trajs:")
     # print(trajs)
