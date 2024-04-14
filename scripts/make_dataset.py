@@ -36,6 +36,8 @@ lesser_adjs = [lesser_height_adjs] + [lesser_velocity_adjs] + [lesser_distance_a
 
 
 # reads states and actions from files and returns them as a list of trajectories (observations + actions)
+# observations = (500, 39) for 500 timesteps
+# actions = (500, 4) for 500 timesteps
 # also calculates feature values for each trajectory and returns them
 def form_trajectories():
     print("*****Forming trajectories = (observations + actions)*****")
