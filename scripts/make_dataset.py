@@ -21,7 +21,7 @@ features = ['height', 'velocity', 'distance_to_object', 'sum']
 # default 500, will be ovewritten by num columnns in actions.json
 NUM_TIMESTEPS = 500
 
-# small dataset for testing, use GPT_augmented_dataset later for full dataset
+# small language feedback dataset for testing, use GPT_augmented_dataset later for full dataset
 greater_height_adjs = ["Move higher.", "Move taller.", "Move at a greater height."]
 greater_velocity_adjs = ["Move faster.", "Move quicker.", "Move swifter.", "Move at a higher speed."]
 greater_distance_adjs = ["Move further from the button.", "Move farther from the button.", "Move more distant from the button."]
@@ -35,17 +35,15 @@ lesser_sum_adjs = ["Press the button worse.", "Press the button not as well."]
 lesser_adjs = [lesser_height_adjs] + [lesser_velocity_adjs] + [lesser_distance_adjs] + [lesser_sum_adjs]
 
 
-# reads states and actions from files and returns them as a list of trajectories (observations + actions)
-# observations = (500, 39) for 500 timesteps
-# actions = (500, 4) for 500 timesteps
+# reads states and actions from files and returns them as a list of trajectories
+    # every trajectory = (observations + actions) = (500, 43) for 500 timesteps
+    # observations = (500, 39) for 500 timesteps
+    # actions = (500, 4) for 500 timesteps
 # also calculates feature values for each trajectory and returns them
 def form_trajectories():
     print("*****Forming trajectories = (observations + actions)*****")
-    # trajectories/0-0-0-0/actions_0.json
-    # trajectories/0-0-0-0/states_0.pickle
+    
     formatted_trajs = []
-    flag = False
-
     f_vals = []
 
     # e.g., 0-0-0-0
@@ -59,6 +57,8 @@ def form_trajectories():
 
             cur_dir = os.path.dirname(os.path.abspath(__file__))
             dir = os.path.join(cur_dir, "../trajectories", variant)
+            # trajectories/0-0-0-0/actions_0.json
+            # trajectories/0-0-0-0/states_0.pickle
 
             # load saved states and actions
             with open(os.path.join(dir, "actions_" + str(trial) + ".json"), 'r') as openfile:
@@ -70,101 +70,50 @@ def form_trajectories():
             observations = []
             NUM_TIMESTEPS = len(actions)
             for step in range(0, NUM_TIMESTEPS):
+                # Get obs and rewards
                 env.set_env_state(states[step])
                 obs = env._get_obs()
                 observations.append(obs)
-                # env.compute_reward_v2(actions[step], obs)
                 reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj, env_state = env.compute_reward_v2(actions[step], obs)
-                
-                # if (not flag and step == 30):
-                #     print("computed reward: ")
-                #     print(avg_sum)
-                #     print(tcp_height)
-                #     print(tcp_vel)
-                #     print(tcp_to_obj)
-                #     print("------")
-                #     flag 
                 
                 avg_sum_vals.append(avg_sum)
                 height_vals.append(tcp_height)
                 velocity_vals.append(tcp_vel)
                 distance_to_obj_vals.append(tcp_to_obj)
             
+            # Add formatted trajectory
             observations = np.array(observations)
             actions = np.array(actions)
             traj = np.concatenate((observations, actions), axis=-1)
             formatted_trajs.append(traj)
-            # if (not flag):
-            #     print("observation: ")
-            #     print(observations)
-            #     print(observations.shape)
-            #     print("actions: " )
-            #     print(actions)
-            #     print(actions.shape)
-            #     print("traj:")
-            #     print(traj)
-            #     print(traj.shape)
-            #     flag = True
 
+            # Add feature values
             f_vals.append([height_vals] + [velocity_vals] + [distance_to_obj_vals] + [avg_sum_vals])
-    # print("example temp[0]")
-    # print(temp[0])
-    # print(temp[0].shape)
-    # print(temp[0][400][0])
 
-    print("NUM_TIMESTEPS: " + str(NUM_TIMESTEPS))
-    print("fvals shape: ")
-    print(np.array(f_vals).shape)
+    # print("NUM_TIMESTEPS: " + str(NUM_TIMESTEPS))
+    # print("fvals shape: ")
+    # print(np.array(f_vals).shape)
     return formatted_trajs, f_vals
 
-# i, j = indices of traj in order of ["0-0-0-0", "0-0-0-1", ... "2-2-2-2"]
+# i, j = indices of traj in order of ["0-0-0-0", "0-0-0-1", ... "2-2-2-2"], where each variant has 4 trials
 # feature = {'height', 'velocity', 'distance_to_object', 'sum'}
 # noisy = if True, 1% chance of opposite comparison
-# returns string of language feedback of traj i to traj j
+# returns string of language feedback of traj i --> traj j
 def generate_synthetic_lang_feedback(i, j, feature, noisy=False):
     # 1 percent chance of getting incorrect comparison
     prob = 0.01
-
-    # get the weights of the two trajectories
-    # cur_dir = os.path.dirname(os.path.abspath(__file__))
-    # variant_path_i = os.path.abspath(os.path.join(cur_dir, "..", "training_configs/sawyer_button_press_v2/variants/", index_weights[i]))
-    # variant_path_j = os.path.abspath(os.path.join(cur_dir, "..", "training_configs/sawyer_button_press_v2/variants/", index_weights[j]))
-    # with open(os.path.join(variant_path_i, "variant.json"), 'r') as openfile:
-    #     variant_file_i = json.load(openfile)
-    # with open(os.path.join(variant_path_j, "variant.json"), 'r') as openfile:
-    #     variant_file_j = json.load(openfile)
-    # weights_i = variant_file_i["eval_environment_kwargs"]["weights"]
-    # weights_j = variant_file_j["eval_environment_kwargs"]["weights"]
 
     # get the average feature values of the two trajectories
     feature_vals_i = feature_vals[i]
     feature_vals_j = feature_vals[j]
     
-    # index of feature
+    # index of feature in order of 
+        # {'height', 'velocity', 'distance_to_object', 'sum'}
     f = features.index(feature)
 
+    # average value of feature over 500 timesteps
     avg_i = np.mean(feature_vals_i[f])
     avg_j = np.mean(feature_vals_j[f])
-
-    # sanity check
-    # if (i == 3 and j == 15):
-    #     print("feature vals 3 for feature " + features[f] + ":")
-    #     print(feature_vals_i[f])
-    #     print("feature vals 15:")
-    #     print(feature_vals_j[f])
-
-    #     print("avg 3:")
-    #     print(avg_i)
-    #     print("avg 15:")
-    #     print(avg_j)
-
-    #     if (avg_i > avg_j):
-    #         print("i is greater, so i --> j is lesser")
-    #         print(lesser_adjs[f][np.random.randint(len(lesser_adjs[f]))])
-    #     if (avg_j > avg_i):
-    #         print("j is greater, so i --> j is greater")
-    #         print(greater_adjs[f][np.random.randint(len(greater_adjs[f]))])
-
 
     # check what language feedback to give
     if (avg_i > avg_j):
@@ -214,11 +163,6 @@ def initialize_globals():
 
     # init trajs and feature_vals
     trajs, feature_vals = form_trajectories()
-
-    # print("trajs:")
-    # print(trajs)
-    # print("feature vals:")
-    # print(feature_vals)
 
 
 # generate traj a's, traj b's, and comparisons from a --> b
@@ -324,6 +268,19 @@ if __name__ == '__main__':
     np.random.seed(seed)
     initialize_globals()
     dataset_traj_as, dataset_traj_bs, dataset_comps = generate_dataset(noisy=noise_augmentation, id_mapping=id_mapping, all_pairs=all_pairs)
+
+    # save dataset
+        # 324 trajs (81 variants x 4 trials each)
+        # 500 timesteps
+        # dataset_traj_as.npy: 
+            # contains indices or trajectories (observations + actions)
+            # e.g., [0, 0, 0, 0, 1, ..., 322, 322, 322, 322]
+        # dataset_traj_bs.npy: 
+            # contains indices or trajectories (observations + actions)
+            # e.g., [1, 1, 1, 1, 2, ..., 323, 323, 323, 323]
+        # dataset_comps.npy: 
+            # contains language feedback phrases to map trajectory a's --> trajectory b's for every feature ['height', 'velocity', 'distance_to_object', 'sum'], possibly with error if noisy
+            # e.g., ["Move more down", "Move faster", "Move closer to the button", "Move better", ..., ...]
 
     cur_dir = os.path.dirname(os.path.abspath(__file__))
     dir = os.path.join(cur_dir, "../dataset")
