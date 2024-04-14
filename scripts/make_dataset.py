@@ -39,7 +39,7 @@ def calc_feature_vals():
     print("*****Calculating feature vals*****")
     f_vals = []
     flag = False
-    for traj in trajs:
+    for trajIndex, traj in enumerate(trajs):
         avg_sum_vals = []
         height_vals = []
         velocity_vals = []
@@ -47,22 +47,23 @@ def calc_feature_vals():
         for step in range(0, NUM_TIMESTEPS):
             # compute_reward_v2(action, observation)
             # traj = [observation(shape 39), action(4)]
-            reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj, env_state = env.compute_reward_v2(traj[step][40:], traj[step][:39])
+            reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj, env_state = env.compute_reward_v2(traj[step][39:], traj[step][:39])
             
-            if (not flag):
-                print("observation: ")
-                print(traj[step][:39])
-                print(traj[step][:39].shape)
-                print("action:")
-                print(traj[step][40:])
-                print(traj[step][40:].shape)
+            print("computed reward: ")
+            print(avg_sum)
+            print(tcp_height)
+            print(tcp_vel)
+            print(tcp_to_obj)
+            print("------")
+            if (trajIndex == 24 and step == 300):
+                # print("observation: ")
+                # print(traj[step][:39])
+                # print(traj[step][:39].shape)
+                # print("action:")
+                # print(traj[step][39:])
+                # print(traj[step][39:].shape)
 
-                print("computed reward: ")
-                print(avg_sum)
-                print(tcp_height)
-                print(tcp_vel)
-                print(tcp_to_obj)
-                print("------")
+                
                 flag = True
             
             avg_sum_vals.append(avg_sum)
@@ -79,7 +80,7 @@ def form_trajectories():
     # trajectories/0-0-0-0/actions_0.json
     # trajectories/0-0-0-0/states_0.pickle
     temp = []
-    flag = False
+    flag = True
 
     # e.g., 0-0-0-0
     for variant in index_weights:
@@ -120,10 +121,11 @@ def form_trajectories():
                 print(traj.shape)
                 flag = True
 
-    print("example temp[0]")
-    print(temp[0])
-    print(temp[0].shape)
-    print(temp[0][400][0])
+    # print("example temp[0]")
+    # print(temp[0])
+    # print(temp[0].shape)
+    # print(temp[0][400][0])
+    print("NUM_TIMESTEPS: " + str(NUM_TIMESTEPS))
     return temp
 
 # i, j = indices of traj in order of ["0-0-0-0", "0-0-0-1", ... "2-2-2-2"]
@@ -185,7 +187,7 @@ def get_comparisons(i, j, noisy=False):
 def initialize_globals():
     global env, trajs, feature_vals, index_weights
 
-    print("***Initializing global variables***")
+    print("*****Initializing global variables*****")
 
     # init index_weights
     # Get all possible weights "0-0-0-0", "0-0-0-1", ... "2-2-2-2
@@ -205,20 +207,22 @@ def initialize_globals():
     trajs = form_trajectories()
     feature_vals = calc_feature_vals()
 
-    print("trajs:")
+    # print("trajs:")
     # print(trajs)
-    print("feature vals:")
+    # print("feature vals:")
     # print(feature_vals)
 
 
 # generate traj a's, traj b's, and comparisons from a --> b
 def generate_dataset(noisy=False, id_mapping=False, all_pairs=True):
+    print("*****Generating Dataset*****")
     # a --> b with language feedback comps
     dataset_traj_as = []
     dataset_traj_bs = []
     dataset_comps = []
 
     if (all_pairs):
+        print("**generating all pairs...***")
         # all pairs where trajs = (0-0-0-0, ..., 2-2-2-2) each with 4 trials, as specified for run_traj_sbx.py
         for i in range(0, len(trajs)):
             for j in range(i + 1, len(trajs)):
@@ -245,6 +249,7 @@ def generate_dataset(noisy=False, id_mapping=False, all_pairs=True):
                         dataset_comps.append(fc)
                     
     else:
+        print("***generating random pairs...***")
         # random pairs
         for n in range(0, len(trajs)):
             i = 0
