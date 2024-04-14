@@ -49,12 +49,12 @@ def form_trajectories():
     # e.g., 0-0-0-0
     for variant in index_weights:
         # 0 to 3
-        avg_sum_vals = []
-        height_vals = []
-        velocity_vals = []
-        distance_to_obj_vals = []
-
         for trial in range(0, 4):
+            avg_sum_vals = []
+            height_vals = []
+            velocity_vals = []
+            distance_to_obj_vals = []
+
             cur_dir = os.path.dirname(os.path.abspath(__file__))
             dir = os.path.join(cur_dir, "../trajectories", variant)
 
@@ -74,13 +74,14 @@ def form_trajectories():
                 # env.compute_reward_v2(actions[step], obs)
                 reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj, env_state = env.compute_reward_v2(actions[step], obs)
                 
-                if (not flag and step == 30):
-                    print("computed reward: ")
-                    print(avg_sum)
-                    print(tcp_height)
-                    print(tcp_vel)
-                    print(tcp_to_obj)
-                    print("------")
+                # if (not flag and step == 30):
+                #     print("computed reward: ")
+                #     print(avg_sum)
+                #     print(tcp_height)
+                #     print(tcp_vel)
+                #     print(tcp_to_obj)
+                #     print("------")
+                #     flag 
                 
                 avg_sum_vals.append(avg_sum)
                 height_vals.append(tcp_height)
@@ -103,12 +104,15 @@ def form_trajectories():
             #     print(traj.shape)
             #     flag = True
 
-        f_vals.append([height_vals] + [velocity_vals] + [distance_to_obj_vals] + [avg_sum_vals])
+            f_vals.append([height_vals] + [velocity_vals] + [distance_to_obj_vals] + [avg_sum_vals])
     # print("example temp[0]")
     # print(temp[0])
     # print(temp[0].shape)
     # print(temp[0][400][0])
+
     print("NUM_TIMESTEPS: " + str(NUM_TIMESTEPS))
+    print("fvals shape: ")
+    print(np.array(f_vals).shape)
     return formatted_trajs, f_vals
 
 # i, j = indices of traj in order of ["0-0-0-0", "0-0-0-1", ... "2-2-2-2"]
@@ -139,6 +143,26 @@ def generate_synthetic_lang_feedback(i, j, feature, noisy=False):
 
     avg_i = np.mean(feature_vals_i[f])
     avg_j = np.mean(feature_vals_j[f])
+
+    # sanity check
+    # if (i == 3 and j == 15):
+    #     print("feature vals 3 for feature " + features[f] + ":")
+    #     print(feature_vals_i[f])
+    #     print("feature vals 15:")
+    #     print(feature_vals_j[f])
+
+    #     print("avg 3:")
+    #     print(avg_i)
+    #     print("avg 15:")
+    #     print(avg_j)
+
+    #     if (avg_i > avg_j):
+    #         print("i is greater, so i --> j is lesser")
+    #         print(lesser_adjs[f][np.random.randint(len(lesser_adjs[f]))])
+    #     if (avg_j > avg_i):
+    #         print("j is greater, so i --> j is greater")
+    #         print(greater_adjs[f][np.random.randint(len(greater_adjs[f]))])
+
 
     # check what language feedback to give
     if (avg_i > avg_j):
@@ -298,3 +322,11 @@ if __name__ == '__main__':
     np.random.seed(seed)
     initialize_globals()
     dataset_traj_as, dataset_traj_bs, dataset_comps = generate_dataset(noisy=noise_augmentation, id_mapping=id_mapping, all_pairs=all_pairs)
+
+    cur_dir = os.path.dirname(os.path.abspath(__file__))
+    dir = os.path.join(cur_dir, "../dataset")
+    if (os.path.exists(dir) == False):
+            os.makedirs(dir)
+    np.save(os.path.join(dir, "dataset_traj_as.npy"), np.array(dataset_traj_as))
+    np.save(os.path.join(dir, "dataset_traj_bs.npy"), np.array(dataset_traj_bs))
+    np.save(os.path.join(dir, "dataset_comps.npy"), np.array(dataset_comps))
