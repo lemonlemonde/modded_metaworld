@@ -95,11 +95,23 @@ def form_trajectories():
     # print(np.array(f_vals).shape)
     return formatted_trajs, f_vals
 
+# modifies global variables greater_adjs and lesser_adjs with gpt augmented dataset json file
+def get_gpt_dataset():
+    global greater_adjs, lesser_adjs
+
+    cur_dir = os.path.dirname(os.path.abspath(__file__))
+    dir = os.path.join(cur_dir, "../dataset")
+    with open(os.path.join(dir, "gpt_augmented_dataset_metaworld.json"), 'r') as openfile:
+        gpt_dataset = json.load(openfile)
+    
+    greater_adjs = gpt_dataset["greater_height"] + gpt_dataset["greater_velocity"] + gpt_dataset["greater_distance"] + gpt_dataset["greater_sum"]
+    lesser_adjs = gpt_dataset["lesser_height"] + gpt_dataset["lesser_velocity"] + gpt_dataset["lesser_distance"] + gpt_dataset["lesser_sum"]
+
 # i, j = indices of traj in order of ["0-0-0-0", "0-0-0-1", ... "2-2-2-2"], where each variant has 4 trials
 # feature = {'height', 'velocity', 'distance_to_object', 'sum'}
 # noisy = if True, 1% chance of opposite comparison
 # returns string of language feedback of traj i --> traj j
-def generate_synthetic_lang_feedback(i, j, feature, noisy=False):
+def generate_synthetic_lang_feedback(i, j, feature, use_gpt_dataset, noisy=False):
     # 1 percent chance of getting incorrect comparison
     prob = 0.01
 
@@ -114,6 +126,10 @@ def generate_synthetic_lang_feedback(i, j, feature, noisy=False):
     # average value of feature over 500 timesteps
     avg_i = np.mean(feature_vals_i[f])
     avg_j = np.mean(feature_vals_j[f])
+
+    if (use_gpt_dataset):
+        # this modifies greater_adjs and lesser_adjs
+        get_gpt_dataset()
 
     # check what language feedback to give
     if (avg_i > avg_j):
@@ -130,6 +146,7 @@ def generate_synthetic_lang_feedback(i, j, feature, noisy=False):
         if (noisy and np.random.rand() < prob):
             # by prob chance, return the opposite comparison
             # i is greater
+            print("some adj: " + str(lesser_adjs[f][np.random.randint(len(lesser_adjs[f]))]))
             return lesser_adjs[f][np.random.randint(len(lesser_adjs[f]))]
         else:
             # j is greater
@@ -251,6 +268,7 @@ if __name__ == '__main__':
     parser.add_argument('--id-mapping', action="store_true", help='')
     parser.add_argument('--all-pairs', action="store_true", help='')
     parser.add_argument('--seed', type=int, default=0, help='')
+    parser.add_argument('--use-gpt-dataset', type=bool, default=True, help='')
 
     args = parser.parse_args()
 
