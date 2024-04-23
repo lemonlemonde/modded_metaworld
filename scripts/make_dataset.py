@@ -35,6 +35,70 @@ lesser_sum_adjs = ["Press the button worse.", "Press the button not as well."]
 lesser_adjs = [lesser_height_adjs] + [lesser_velocity_adjs] + [lesser_distance_adjs] + [lesser_sum_adjs]
 
 
+# sets global variables trajs_train, trajs_test, trajs_val, feature_vals_train, feature_vals_test, feature_vals_val
+    # splits trajs + feature_vals into train, val, test
+    # also splits greater_adjs and lesser_adjs into train, val, test
+def split_dataset(split_train, split_val, split_test, size, split_lang_train, split_lang_test, split_lang_val, size_lang):
+    global trajs_train, trajs_test, trajs_val
+    global feature_vals_train, feature_vals_test, feature_vals_val
+    global greater_train_adjs, greater_test_adjs, greater_val_adjs
+    global lesser_train_adjs, lesser_test_adjs, lesser_val_adjs
+    
+    # check
+    if (split_train + split_test + split_val != size):
+        print("ERROR: split_train + split_val + split_test != size")
+        return
+    if (split_lang_train + split_lang_test + split_lang_val != size_lang):
+        print("ERROR: split_lang_train + split_lang_test + split_lang_val != size_lang")
+        return
+
+    # random split_train number of integers from 0 to 323
+    train_indices = np.random.choice(size, split_train, replace=False)
+    val_test_indices = np.setdiff1d(np.arange(size), train_indices)
+    test_indices = np.random.choice(val_test_indices, split_test, replace=False)
+    val_indices = np.setdiff1d(val_test_indices, test_indices)
+
+    if (len(train_indices) + len(val_indices) + len(test_indices) != size):
+        print("ERROR: split_train + split_val + split_test != size")
+
+    # trajs
+    trajs_train = [trajs[i] for i in train_indices]
+    trajs_test = [trajs[i] for i in test_indices]
+    trajs_val = [trajs[i] for i in val_indices]
+
+    # feature_vals
+    feature_vals_train = [feature_vals[i] for i in train_indices]
+    feature_vals_test = [feature_vals[i] for i in test_indices]
+    feature_vals_val = [feature_vals[i] for i in val_indices]
+
+    feature_vals = []
+
+    # ------------------------------
+
+    # get indices
+    train_indices = np.random.choice(size_lang, split_lang_train, replace=False)
+    val_test_indices = np.setdiff1d(np.arange(size_lang), train_indices)
+    test_indices = np.random.choice(val_test_indices, split_lang_test, replace=False)
+    val_indices = np.setdiff1d(val_test_indices, test_indices)
+
+    if (len(train_indices) + len(val_indices) + len(test_indices) != size_lang):
+        print("ERROR: len(train_indices) + len(val_indices) + len(test_indices) != size_lang")
+
+    # greater_adjs
+    greater_train_adjs = [greater_adjs[i] for i in train_indices]
+    greater_test_adjs = [greater_adjs[i] for i in test_indices]
+    greater_val_adjs = [greater_adjs[i] for i in val_indices]
+
+    greater_adjs = []
+
+    # lesser_adjs
+    lesser_train_adjs = [lesser_adjs[i] for i in train_indices]
+    lesser_test_adjs = [lesser_adjs[i] for i in test_indices]
+    lesser_val_adjs = [lesser_adjs[i] for i in val_indices]
+
+    lesser_adjs = []
+
+
 # reads states and actions from files and returns them as a list of trajectories
     # every trajectory = (observations + actions) = (500, 43) for 500 timesteps
     # observations = (500, 39) for 500 timesteps
@@ -111,7 +175,20 @@ def get_gpt_dataset():
 # feature = {'height', 'velocity', 'distance_to_object', 'sum'}
 # noisy = if True, 1% chance of opposite comparison
 # returns string of language feedback of traj i --> traj j
-def generate_synthetic_lang_feedback(i, j, feature, use_gpt_dataset, noisy=False):
+def generate_synthetic_lang_feedback(i, j, feature, set, noisy=False):
+    if (set == "train"):
+        feature_vals = feature_vals_train
+        greater_adjs = greater_train_adjs
+        lesser_adjs = lesser_train_adjs
+    elif (set == "test"):
+        feature_vals = feature_vals_test
+        greater_adjs = greater_test_adjs
+        lesser_adjs = lesser_test_adjs
+    elif (set == "val"):
+        feature_vals = feature_vals_val
+        greater_adjs = greater_val_adjs
+        lesser_adjs = lesser_val_adjs
+
     # 1 percent chance of getting incorrect comparison
     prob = 0.01
 
@@ -126,10 +203,6 @@ def generate_synthetic_lang_feedback(i, j, feature, use_gpt_dataset, noisy=False
     # average value of feature over 500 timesteps
     avg_i = np.mean(feature_vals_i[f])
     avg_j = np.mean(feature_vals_j[f])
-
-    if (use_gpt_dataset):
-        # this modifies greater_adjs and lesser_adjs
-        get_gpt_dataset()
 
     # check what language feedback to give
     if (avg_i > avg_j):
@@ -152,14 +225,14 @@ def generate_synthetic_lang_feedback(i, j, feature, use_gpt_dataset, noisy=False
             # j is greater
             return greater_adjs[f][np.random.randint(len(greater_adjs[f]))]
 
-def get_comparisons(i, j, noisy=False):
+def get_comparisons(i, j, set, noisy=False):
     out = []
     for feature in ['height', 'velocity', 'distance_to_object', 'sum']:
-        out.append(generate_synthetic_lang_feedback(i, j, feature, noisy=noisy))
+        out.append(generate_synthetic_lang_feedback(i, j, feature, set, noisy=noisy))
     return out
 
 
-def initialize_globals():
+def initialize_globals(use_gpt_dataset, split_train, split_test, split_val, split_lang_train, split_lang_test, split_lang_val):
     global env, trajs, feature_vals, index_weights
 
     print("\t-->>-- Initializing Global Variables! --<<--")
@@ -181,10 +254,23 @@ def initialize_globals():
     # init trajs and feature_vals
     trajs, feature_vals = form_trajectories()
 
+    # this modifies greater_adjs and lesser_adjs
+    if (use_gpt_dataset):
+        get_gpt_dataset()
+
+    # split the datasets here for trajs, feature_vals, greater_adjs, lesser_adjs
+    split_dataset(split_train=split_train, split_test=split_test, split_val=split_val, size=len(trajs), split_lang_train=split_lang_train, split_lang_test=split_lang_test, split_lang_val=split_lang_val, size_lang=len(greater_adjs))
+
 
 # generate traj a's, traj b's, and comparisons from a --> b
-def generate_dataset(noisy=False, id_mapping=False, all_pairs=True):
-    
+def generate_dataset(set, noisy=False, id_mapping=False, all_pairs=True):
+    if (set == "train"):
+        input_trajs = trajs_train
+    elif (set == "test"):
+        input_trajs = trajs_test
+    elif (set == "val"):
+        input_trajs = trajs_val
+
     # a --> b with language feedback comps
     dataset_traj_as = []
     dataset_traj_bs = []
@@ -192,11 +278,11 @@ def generate_dataset(noisy=False, id_mapping=False, all_pairs=True):
 
     if (all_pairs):
         print("\t-->>-- Generating Dataset (all pairs)! --<<--")
-        # all pairs where trajs = (0-0-0-0, ..., 2-2-2-2) each with 4 trials, as specified for run_traj_sbx.py
-        for i in range(0, len(trajs)):
-            for j in range(i + 1, len(trajs)):
-                comps = get_comparisons(i, j, noisy=noisy)
-                flipped_comps = get_comparisons(j, i, noisy=noisy)
+        # all pairs where input_trajs = (0-0-0-0, ..., 2-2-2-2) each with 4 trials, as specified for run_traj_sbx.py
+        for i in range(0, len(input_trajs)):
+            for j in range(i + 1, len(input_trajs)):
+                comps = get_comparisons(i, j, set, noisy=noisy)
+                flipped_comps = get_comparisons(j, i, set, noisy=noisy)
 
                 for c in comps:
                     if (id_mapping):
@@ -204,8 +290,8 @@ def generate_dataset(noisy=False, id_mapping=False, all_pairs=True):
                         dataset_traj_bs.append(j)
                         dataset_comps.append(c)
                     else:
-                        dataset_traj_as.append(trajs[i])
-                        dataset_traj_bs.append(trajs[j])
+                        dataset_traj_as.append(input_trajs[i])
+                        dataset_traj_bs.append(input_trajs[j])
                         dataset_comps.append(c)
                 for fc in flipped_comps:
                     if (id_mapping):
@@ -213,22 +299,22 @@ def generate_dataset(noisy=False, id_mapping=False, all_pairs=True):
                         dataset_traj_bs.append(i)
                         dataset_comps.append(fc)
                     else:
-                        dataset_traj_as.append(trajs[j])
-                        dataset_traj_bs.append(trajs[i])
+                        dataset_traj_as.append(input_trajs[j])
+                        dataset_traj_bs.append(input_trajs[i])
                         dataset_comps.append(fc)
                     
     else:
         print("\t-->>-- Generating Dataset (random pairs)! --<<--")
         # random pairs
-        for n in range(0, len(trajs)):
+        for n in range(0, len(input_trajs)):
             i = 0
             j = 0
             while i == j:
-                i = np.random.randint(len(trajs))
-                j = np.random.randint(len(trajs))
+                i = np.random.randint(len(input_trajs))
+                j = np.random.randint(len(input_trajs))
 
-            comps = get_comparisons(i, j, noisy=noisy)
-            flipped_comps = get_comparisons(j, i, noisy=noisy)
+            comps = get_comparisons(i, j, set, noisy=noisy)
+            flipped_comps = get_comparisons(j, i, set, noisy=noisy)
 
             for c in comps:
                 if (id_mapping):
@@ -236,8 +322,8 @@ def generate_dataset(noisy=False, id_mapping=False, all_pairs=True):
                     dataset_traj_bs.append(j)
                     dataset_comps.append(c)
                 else:
-                    dataset_traj_as.append(trajs[i])
-                    dataset_traj_bs.append(trajs[j])
+                    dataset_traj_as.append(input_trajs[i])
+                    dataset_traj_bs.append(input_trajs[j])
                     dataset_comps.append(c)
             for fc in flipped_comps:
                 if (id_mapping):
@@ -245,8 +331,8 @@ def generate_dataset(noisy=False, id_mapping=False, all_pairs=True):
                     dataset_traj_bs.append(i)
                     dataset_comps.append(fc)
                 else:
-                    dataset_traj_as.append(trajs[j])
-                    dataset_traj_bs.append(trajs[i])
+                    dataset_traj_as.append(input_trajs[j])
+                    dataset_traj_bs.append(input_trajs[i])
                     dataset_comps.append(fc)
 
     return dataset_traj_as, dataset_traj_bs, dataset_comps
@@ -269,6 +355,13 @@ if __name__ == '__main__':
     parser.add_argument('--all-pairs', action="store_true", help='')
     parser.add_argument('--seed', type=int, default=0, help='')
     parser.add_argument('--use-gpt-dataset', type=bool, default=True, help='')
+    parser.add_argument('--split-train', type=float, default=260, help='number of trajectories for train set')
+    parser.add_argument('--split-test', type=float, default=32, help='number of trajectories for test set')
+    parser.add_argument('--split-val', type=float, default=32, help='number of trajectories for val set')
+    parser.add_argument('--split-lang-train', type=float, default=304, help='number of language feedback phrases for train set')
+    parser.add_argument('--split-lang-test', type=float, default=48, help='number of language feedback phrases for test set')
+    parser.add_argument('--split-lang-val', type=float, default=48, help='number of language feedback phrases for val set')
+
 
     args = parser.parse_args()
 
@@ -283,10 +376,22 @@ if __name__ == '__main__':
     id_mapping = args.id_mapping
     all_pairs = args.all_pairs
     seed = args.seed
+    use_gpt_dataset = args.use_gpt_dataset
+    split_train = args.split_train
+    split_test = args.split_test
+    split_val = args.split_val
+    split_lang_train = args.split_lang_train
+    split_lang_test = args.split_lang_test
+    split_lang_val = args.split_lang_val
 
     np.random.seed(seed)
-    initialize_globals()
-    dataset_traj_as, dataset_traj_bs, dataset_comps = generate_dataset(noisy=noise_augmentation, id_mapping=id_mapping, all_pairs=all_pairs)
+    initialize_globals(use_gpt_dataset=use_gpt_dataset, split_train=split_train, split_test=split_test, split_val=split_val, split_lang_train=split_lang_train, split_lang_test=split_lang_test, split_lang_val=split_lang_val)
+
+    
+    dataset_train_traj_as, dataset_train_traj_bs, dataset_train_comps = generate_dataset(set="train", noisy=noise_augmentation, id_mapping=id_mapping, all_pairs=all_pairs)
+    dataset_test_traj_as, dataset_test_traj_bs, dataset_test_comps = generate_dataset(set="test", noisy=noise_augmentation, id_mapping=id_mapping, all_pairs=all_pairs)
+    dataset_val_traj_as, dataset_val_traj_bs, dataset_val_comps = generate_dataset(set="val", noisy=noise_augmentation, id_mapping=id_mapping, all_pairs=all_pairs)
+
 
     # save dataset
         # 324 trajs (81 variants x 4 trials each)
