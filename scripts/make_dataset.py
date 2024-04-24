@@ -14,7 +14,15 @@ from metaworld.envs import ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE
 
 env = None
 trajs = []
+trajs_train = []
+trajs_test = []
+trajs_val = []
+
 feature_vals = []
+feature_vals_train = []
+feature_vals_test = []
+feature_vals_val = []
+
 index_weights = []
 features = ['height', 'velocity', 'distance_to_object', 'sum']
 
@@ -39,6 +47,8 @@ lesser_adjs = [lesser_height_adjs] + [lesser_velocity_adjs] + [lesser_distance_a
     # splits trajs + feature_vals into train, val, test
     # also splits greater_adjs and lesser_adjs into train, val, test
 def split_dataset(split_train, split_val, split_test, size, split_lang_train, split_lang_test, split_lang_val, size_lang):
+    global feature_vals
+    global greater_adjs, lesser_adjs
     global trajs_train, trajs_test, trajs_val
     global feature_vals_train, feature_vals_test, feature_vals_val
     global greater_train_adjs, greater_test_adjs, greater_val_adjs
@@ -47,19 +57,38 @@ def split_dataset(split_train, split_val, split_test, size, split_lang_train, sp
     # check
     if (split_train + split_test + split_val != size):
         print("ERROR: split_train + split_val + split_test != size")
+        print("split_train: ", split_train)
+        print("split_test", split_test)
+        print("split_val:", split_val)
+        print("size:", size)
         return
+    else:
+        print("traj sizes all good")
     if (split_lang_train + split_lang_test + split_lang_val != size_lang):
         print("ERROR: split_lang_train + split_lang_test + split_lang_val != size_lang")
+        print("split_lang_train:", split_lang_train)
+        print("split_lang_test", split_lang_test)
+        print("split_lang_val:", split_lang_val)
+        print("size lang: ", size_lang)
         return
+    else:
+        print("lang sizes all good")
 
     # random split_train number of integers from 0 to 323
-    train_indices = np.random.choice(size, split_train, replace=False)
+    train_indices = np.random.choice(size, int(split_train), replace=False)
     val_test_indices = np.setdiff1d(np.arange(size), train_indices)
-    test_indices = np.random.choice(val_test_indices, split_test, replace=False)
+    test_indices = np.random.choice(val_test_indices, int(split_test), replace=False)
     val_indices = np.setdiff1d(val_test_indices, test_indices)
 
-    if (len(train_indices) + len(val_indices) + len(test_indices) != size):
+    if (len(train_indices) + len(val_indices) + len(test_indices) != int(size)):
         print("ERROR: split_train + split_val + split_test != size")
+
+    print("train indices")
+    print(train_indices)
+    print("test_indices:")
+    print(test_indices)
+    print("val_indices")
+    print(val_indices)
 
     # trajs
     trajs_train = [trajs[i] for i in train_indices]
@@ -76,25 +105,75 @@ def split_dataset(split_train, split_val, split_test, size, split_lang_train, sp
     # ------------------------------
 
     # get indices
-    train_indices = np.random.choice(size_lang, split_lang_train, replace=False)
+    split_lang_train /= 4
+    split_lang_test /= 4
+    split_lang_val /= 4
+    size_lang /= 4
+    train_indices = np.random.choice(int(size_lang), int(split_lang_train), replace=False)
     val_test_indices = np.setdiff1d(np.arange(size_lang), train_indices)
-    test_indices = np.random.choice(val_test_indices, split_lang_test, replace=False)
+    test_indices = np.random.choice(val_test_indices, int(split_lang_test), replace=False)
     val_indices = np.setdiff1d(val_test_indices, test_indices)
+
+    train_indices = [int(i) for i in train_indices]
+    test_indices = [int(i) for i in test_indices]
+    val_indices = [int(i) for i in val_indices]
 
     if (len(train_indices) + len(val_indices) + len(test_indices) != size_lang):
         print("ERROR: len(train_indices) + len(val_indices) + len(test_indices) != size_lang")
+        print("len train indices:" + len(train_indices))
+        print("len test_indices: " + len(test_indices))
+        print("len val indices:" + len(val_indices))
 
+    print("train indices:")
+    print(train_indices)
+    print("test_indices:")
+    print(test_indices)
+    print("val_indices")
+    print(val_indices)
+
+    print("size of greater_adjs[0]")
+    print(len(greater_adjs[0]))
     # greater_adjs
-    greater_train_adjs = [greater_adjs[i] for i in train_indices]
-    greater_test_adjs = [greater_adjs[i] for i in test_indices]
-    greater_val_adjs = [greater_adjs[i] for i in val_indices]
+    # train
+    greater_train_0 = [greater_adjs[0][int(i)] for i in train_indices]
+    greater_train_1 = [greater_adjs[1][int(i)] for i in train_indices]
+    greater_train_2 = [greater_adjs[2][int(i)] for i in train_indices]
+    greater_train_3 = [greater_adjs[3][int(i)] for i in train_indices]
+    greater_train_adjs = [greater_train_0] + [greater_train_1] + [greater_train_2] + [greater_train_3]
+    # test
+    greater_test_0 = [greater_adjs[0][int(i)] for i in test_indices]
+    greater_test_1 = [greater_adjs[1][int(i)] for i in test_indices]
+    greater_test_2 = [greater_adjs[2][int(i)] for i in test_indices]
+    greater_test_3 = [greater_adjs[3][int(i)] for i in test_indices]
+    greater_test_adjs = [greater_test_0] + [greater_test_1] + [greater_test_2] + [greater_test_3]
+    # val
+    greater_val_0 = [greater_adjs[0][int(i)] for i in val_indices]
+    greater_val_1 = [greater_adjs[1][int(i)] for i in val_indices]
+    greater_val_2 = [greater_adjs[2][int(i)] for i in val_indices]
+    greater_val_3 = [greater_adjs[3][int(i)] for i in val_indices]
+    greater_val_adjs = [greater_val_0] + [greater_val_1] + [greater_val_2] + [greater_val_3]
 
     greater_adjs = []
 
     # lesser_adjs
-    lesser_train_adjs = [lesser_adjs[i] for i in train_indices]
-    lesser_test_adjs = [lesser_adjs[i] for i in test_indices]
-    lesser_val_adjs = [lesser_adjs[i] for i in val_indices]
+    # train
+    lesser_train_0 = [lesser_adjs[0][int(i)] for i in train_indices]
+    lesser_train_1 = [lesser_adjs[1][int(i)] for i in train_indices]
+    lesser_train_2 = [lesser_adjs[2][int(i)] for i in train_indices]
+    lesser_train_3 = [lesser_adjs[3][int(i)] for i in train_indices]
+    lesser_train_adjs = [lesser_train_0] + [lesser_train_1] + [lesser_train_2] + [lesser_train_3]
+    # test
+    lesser_test_0 = [lesser_adjs[0][int(i)] for i in test_indices]
+    lesser_test_1 = [lesser_adjs[1][int(i)] for i in test_indices]
+    lesser_test_2 = [lesser_adjs[2][int(i)] for i in test_indices]
+    lesser_test_3 = [lesser_adjs[3][int(i)] for i in test_indices]
+    lesser_test_adjs = [lesser_test_0] + [lesser_test_1] + [lesser_test_2] + [lesser_test_3]
+    # val
+    lesser_val_0 = [lesser_adjs[0][int(i)] for i in val_indices]
+    lesser_val_1 = [lesser_adjs[1][int(i)] for i in val_indices]
+    lesser_val_2 = [lesser_adjs[2][int(i)] for i in val_indices]
+    lesser_val_3 = [lesser_adjs[3][int(i)] for i in val_indices]
+    lesser_val_adjs = [lesser_val_0] + [lesser_val_1] + [lesser_val_2] + [lesser_val_3]
 
     lesser_adjs = []
 
@@ -168,8 +247,11 @@ def get_gpt_dataset():
     with open(os.path.join(dir, "gpt_augmented_dataset_metaworld.json"), 'r') as openfile:
         gpt_dataset = json.load(openfile)
     
-    greater_adjs = gpt_dataset["greater_height"] + gpt_dataset["greater_velocity"] + gpt_dataset["greater_distance"] + gpt_dataset["greater_sum"]
-    lesser_adjs = gpt_dataset["lesser_height"] + gpt_dataset["lesser_velocity"] + gpt_dataset["lesser_distance"] + gpt_dataset["lesser_sum"]
+    greater_adjs = [gpt_dataset["greater_height"]] + [gpt_dataset["greater_velocity"]] + [gpt_dataset["greater_distance"]] + [gpt_dataset["greater_sum"]]
+    lesser_adjs = [gpt_dataset["lesser_height"]] + [gpt_dataset["lesser_velocity"]] + [gpt_dataset["lesser_distance"]] + [gpt_dataset["lesser_sum"]]
+
+    print("len greater: ", len(greater_adjs))
+    print("len lesser:", len(lesser_adjs))
 
 # i, j = indices of traj in order of ["0-0-0-0", "0-0-0-1", ... "2-2-2-2"], where each variant has 4 trials
 # feature = {'height', 'velocity', 'distance_to_object', 'sum'}
@@ -219,7 +301,7 @@ def generate_synthetic_lang_feedback(i, j, feature, set, noisy=False):
         if (noisy and np.random.rand() < prob):
             # by prob chance, return the opposite comparison
             # i is greater
-            print("some adj: " + str(lesser_adjs[f][np.random.randint(len(lesser_adjs[f]))]))
+            # print("some adj: " + str(lesser_adjs[f][np.random.randint(len(lesser_adjs[f]))]))
             return lesser_adjs[f][np.random.randint(len(lesser_adjs[f]))]
         else:
             # j is greater
@@ -259,7 +341,7 @@ def initialize_globals(use_gpt_dataset, split_train, split_test, split_val, spli
         get_gpt_dataset()
 
     # split the datasets here for trajs, feature_vals, greater_adjs, lesser_adjs
-    split_dataset(split_train=split_train, split_test=split_test, split_val=split_val, size=len(trajs), split_lang_train=split_lang_train, split_lang_test=split_lang_test, split_lang_val=split_lang_val, size_lang=len(greater_adjs))
+    split_dataset(split_train=split_train, split_test=split_test, split_val=split_val, size=len(trajs), split_lang_train=split_lang_train, split_lang_test=split_lang_test, split_lang_val=split_lang_val, size_lang=len(greater_adjs[0] + greater_adjs[1] + greater_adjs[2] + greater_adjs[3]))
 
 
 # generate traj a's, traj b's, and comparisons from a --> b
@@ -358,9 +440,9 @@ if __name__ == '__main__':
     parser.add_argument('--split-train', type=float, default=260, help='number of trajectories for train set')
     parser.add_argument('--split-test', type=float, default=32, help='number of trajectories for test set')
     parser.add_argument('--split-val', type=float, default=32, help='number of trajectories for val set')
-    parser.add_argument('--split-lang-train', type=float, default=304, help='number of language feedback phrases for train set')
-    parser.add_argument('--split-lang-test', type=float, default=48, help='number of language feedback phrases for test set')
-    parser.add_argument('--split-lang-val', type=float, default=48, help='number of language feedback phrases for val set')
+    parser.add_argument('--split-lang-train', type=float, default=304, help='number of language feedback phrases (only counting greater_adjs) for train set')
+    parser.add_argument('--split-lang-test', type=float, default=48, help='number of language feedback phrases (only counting greater_adjs) for test set')
+    parser.add_argument('--split-lang-val', type=float, default=48, help='number of language feedback phrases (only counting greater_adjs) for val set')
 
 
     args = parser.parse_args()
@@ -393,52 +475,142 @@ if __name__ == '__main__':
     dataset_val_traj_as, dataset_val_traj_bs, dataset_val_comps = generate_dataset(set="val", noisy=noise_augmentation, id_mapping=id_mapping, all_pairs=all_pairs)
 
 
-    # save dataset
+
+    # dataset size:
         # 324 trajs (81 variants x 4 trials each)
-        # 500 timesteps
-        # 418608 is from:
-            # (81 variants x 4 trials each) = 324
-            # 324 choose 2 (i-->j) = 52326
-            # 52326 x 4 features = 209304
-            # 209304 x 2 for flipped order (j-->i) = 418608
-        # dataset_traj_as.npy: 
+            # 500 timesteps
+        # 440 language feedback (55 sentences x 4 features x 2 (greater/lesser))
+        # 269360 (len of dataset_train_traj_as) is from:
+            # split:    
+                # 324 trajs = 260 train + 32 test + 32 val
+                    # random split
+                # 440 lang = (172 train + 24 test + 24 val) x 2 (greater/lesser)
+                    # train
+                        # 43 greater height
+                        # 43 greater velocity
+                        # 43 greater distance
+                        # 43 greater avg sum
+                        # 43 lesser height
+                        # 43 lesser velocity
+                        # 43 lesser distance
+                        # 43 lesser avg sum
+                    # test
+                        # 6 each
+                    # val
+                        # 6 each
+            # train
+                # 260 split trajs choose (i-->j) = 33670
+                # 33670 x 4 features = 134680
+                # 134680 x 2 for flipped order (j--i) = 269360
+            # test
+                # etc
+            # val
+                # etc
+    # example dataset
+        # dataset_train_traj_as.npy: 
             # contains indices or trajectories (observations + actions)
-            # e.g., [0, 0, 0, 0, 1, ..., 322, 322, 322, 322]
-        # dataset_traj_bs.npy: 
+            # e.g., [0, 0, 0, 0, 1, ..., 259, 259, 259, 259]
+        # dataset_train_traj_bs.npy: 
             # contains indices or trajectories (observations + actions)
-            # e.g., [1, 1, 1, 1, 2, ..., 323, 323, 323, 323]
-        # dataset_comps.npy: 
+            # e.g., [1, 1, 1, 1, 0, ..., 258, 258, 258, 258]
+        # dataset_train_comps.npy: 
             # contains language feedback phrases to map trajectory a's --> trajectory b's for every feature ['height', 'velocity', 'distance_to_object', 'sum'], possibly with error if noisy
             # e.g., ["Move more down", "Move faster", "Move closer to the button", "Move better", ..., ...]
+        # dataset_test_traj_as.npy
+            # etc
+        # dataset_test_traj_bs.npy
+            # etc
+        # dataset_test_comps.npy
+            # etc
+        # dataset_val_traj_as.npy
+            # etc
+        # dataset_val_traj_bs.npy
+            # etc
+        # dataset_val_comps.npy
+            # etc
 
     cur_dir = os.path.dirname(os.path.abspath(__file__))
     dir = os.path.join(cur_dir, "../dataset")
     if (os.path.exists(dir) == False):
             os.makedirs(dir)
-    np.save(os.path.join(dir, "dataset_traj_as.npy"), np.array(dataset_traj_as))
-    np.save(os.path.join(dir, "dataset_traj_bs.npy"), np.array(dataset_traj_bs))
-    np.save(os.path.join(dir, "dataset_comps.npy"), np.array(dataset_comps))
+
+    np.save(os.path.join(dir, "dataset_train_traj_as.npy"), np.array(dataset_train_traj_as))
+    np.save(os.path.join(dir, "dataset_train_traj_bs.npy"), np.array(dataset_train_traj_bs))
+
+    np.save(os.path.join(dir, "dataset_test_traj_as.npy"), np.array(dataset_test_traj_as))
+    np.save(os.path.join(dir, "dataset_test_traj_bs.npy"), np.array(dataset_test_traj_bs))
+
+    np.save(os.path.join(dir, "dataset_val_traj_as.npy"), np.array(dataset_val_traj_as))
+    np.save(os.path.join(dir, "dataset_val_traj_bs.npy"), np.array(dataset_val_traj_bs))
+
+    np.save(os.path.join(dir, "dataset_train_comps.npy"), np.array(dataset_train_comps))
+    np.save(os.path.join(dir, "dataset_test_comps.npy"), np.array(dataset_test_comps))
+    np.save(os.path.join(dir, "dataset_val_comps.npy"), np.array(dataset_val_comps))
 
     print("-->>-->>-- Done making dataset!!! --<<--<<--")
 
+    # ----------------------------
+
     # open np files and check
     print("-->>-->>-- Checking saved files... --<<--<<--")
-    print("dataset_traj_as:")
-    traj_as = np.load(os.path.join(dir, "dataset_traj_as.npy"))
+    print("dataset_train_traj_as:")
+    traj_as = np.load(os.path.join(dir, "dataset_train_traj_as.npy"))
     print(traj_as)
     print(traj_as.shape)
     # for i in range(0, 17):
     #     print(traj_as[i])
 
-    print("dataset_traj_bs:")
-    traj_bs = np.load(os.path.join(dir, "dataset_traj_bs.npy"))
+    print("dataset_train_traj_bs:")
+    traj_bs = np.load(os.path.join(dir, "dataset_train_traj_bs.npy"))
     print(traj_bs)
     print(traj_bs.shape)
     # for i in range(0, 17):
     #     print(traj_bs[i])
 
-    print("dataset_comps:")
-    comps = np.load(os.path.join(dir, "dataset_comps.npy"))
+    print("dataset_train_comps:")
+    comps = np.load(os.path.join(dir, "dataset_train_comps.npy"))
+    print(comps)
+    print(comps.shape)
+
+    # -----------
+
+    print("dataset_test_traj_as:")
+    traj_as = np.load(os.path.join(dir, "dataset_test_traj_as.npy"))
+    print(traj_as)
+    print(traj_as.shape)
+    # for i in range(0, 17):
+    #     print(traj_as[i])
+
+    print("dataset_test_traj_bs:")
+    traj_bs = np.load(os.path.join(dir, "dataset_test_traj_bs.npy"))
+    print(traj_bs)
+    print(traj_bs.shape)
+    # for i in range(0, 17):
+    #     print(traj_bs[i])
+
+    print("dataset_test_comps:")
+    comps = np.load(os.path.join(dir, "dataset_test_comps.npy"))
+    print(comps)
+    print(comps.shape)
+
+    # -----------
+
+    print("dataset_val_traj_as:")
+    traj_as = np.load(os.path.join(dir, "dataset_val_traj_as.npy"))
+    print(traj_as)
+    print(traj_as.shape)
+    # for i in range(0, 17):
+    #     print(traj_as[i])
+
+    print("dataset_val_traj_bs:")
+    traj_bs = np.load(os.path.join(dir, "dataset_val_traj_bs.npy"))
+    print(traj_bs)
+    print(traj_bs.shape)
+    # for i in range(0, 17):
+    #     print(traj_bs[i])
+
+    print("dataset_val_comps:")
+    comps = np.load(os.path.join(dir, "dataset_val_comps.npy"))
     print(comps)
     print(comps.shape)
     print("-->>-->>-- Check ^^^ everything looks okay?? --<<--<<--")
