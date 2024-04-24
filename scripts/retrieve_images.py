@@ -21,6 +21,8 @@ def get_images_from_mp4s():
     # error
     defects = []
 
+    flag = False
+
     # go through 0-0-0-0, 0-0-0-2, ..., 2-2-2-2
     for i in range(3):
         for j in range(3):
@@ -44,25 +46,35 @@ def get_images_from_mp4s():
                             if not success:
                                 break
 
-                            # resize 
-                            # half = cv2.resize(crop_img, (0, 0), fx = 0.1, fy = 0.1)
+                            
 
                             center = image.shape
-                            w = 224
-                            h = 224
+                            w = 400
+                            h = 400
                             x = center[1]/2 - w/2
                             y = center[0]/2 - h/2
 
                             crop_img = image[int(y):int(y+h), int(x):int(x+w)]
                             crop_img = cv2.cvtColor(crop_img, cv2.COLOR_BGR2RGB)
 
-                            images.append(crop_img)
+                            # resize 
+                            half = cv2.resize(crop_img, (224, 224))
+
+                            images.append(half)
+
+                            if (not flag):
+                                # save image
+                                image_dir = os.path.join(cur_dir, "../dataset", "images")
+                                if not os.path.exists(image_dir):
+                                    os.makedirs(image_dir)
+                                cv2.imwrite(os.path.join(image_dir, variant + "_" + str(m) + "_" + str(count) + ".jpg"), half)
+                                flag = True
 
                             count += 1
                         print("Done variant: ", variant, "trial: ", m, "frames: ", count)
-                        if (count != 502):
-                            print("Variant: ", variant, " trial: ", m, " doesn't have 512 frames!!!!!")
-                            defects.append("variant: ", variant, "trial: ", m)
+                        if (count != 501):
+                            print("Variant: ", variant, " trial: ", m, " doesn't have 501 frames!!!!!")
+                            defects.append("variant: " + str(variant) + "trial: " + str(m))
 
     for i in defects:
         print(defects)
