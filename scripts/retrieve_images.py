@@ -8,6 +8,7 @@ import pickle
 import cv2
 import torch
 from torchvision.transforms import v2
+from PIL import Image
 
 def get_images_from_mp4s():
     # directory
@@ -32,6 +33,7 @@ def get_images_from_mp4s():
                         # get the mp4 from the directory
                         mp4_path = os.path.join(trajectory_dir, variant, "images_" + str(m), "button_press_" + str(m) + ".mp4")
                         vidObj = cv2.VideoCapture(mp4_path) 
+                        
                         # counter var
                         count = 0
                         success = 1
@@ -39,8 +41,23 @@ def get_images_from_mp4s():
                         while success: 
                             # get frames
                             success, image = vidObj.read() 
-                            if success:
-                                images.append(image)
+                            if not success:
+                                break
+
+                            # resize 
+                            # half = cv2.resize(crop_img, (0, 0), fx = 0.1, fy = 0.1)
+
+                            center = image.shape
+                            w = 224
+                            h = 224
+                            x = center[1]/2 - w/2
+                            y = center[0]/2 - h/2
+
+                            crop_img = image[int(y):int(y+h), int(x):int(x+w)]
+                            crop_img = cv2.cvtColor(crop_img, cv2.COLOR_BGR2RGB)
+
+                            images.append(crop_img)
+
                             count += 1
                         print("Done variant: ", variant, "trial: ", m, "frames: ", count)
                         if (count != 502):
