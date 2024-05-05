@@ -42,6 +42,7 @@ lesser_distance_adjs = ["Move closer to the button.", "Move nearer to the button
 lesser_sum_adjs = ["Press the button worse.", "Press the button not as well."]
 lesser_adjs = [lesser_height_adjs] + [lesser_velocity_adjs] + [lesser_distance_adjs] + [lesser_sum_adjs]
 
+all_adjs = []
 
 # sets global variables trajs_train, trajs_test, trajs_val, feature_vals_train, feature_vals_test, feature_vals_val
     # splits trajs + feature_vals into train, val, test
@@ -293,6 +294,10 @@ def get_gpt_dataset():
     
     greater_adjs = [gpt_dataset["greater_height"]] + [gpt_dataset["greater_velocity"]] + [gpt_dataset["greater_distance"]] + [gpt_dataset["greater_sum"]]
     lesser_adjs = [gpt_dataset["lesser_height"]] + [gpt_dataset["lesser_velocity"]] + [gpt_dataset["lesser_distance"]] + [gpt_dataset["lesser_sum"]]
+    all_adjs = greater_adjs[0] + greater_adjs[1] + greater_adjs[2] + greater_adjs[3] + lesser_adjs[0] + lesser_adjs[1] + lesser_adjs[2] + lesser_adjs[3]
+
+    all_adjs = list(sorted(set(all_adjs)))
+    np.save(os.path.join(dir, "all_adjs.npy"), np.array(all_adjs))
 
     print("len greater: ", len(greater_adjs))
     print("len lesser:", len(lesser_adjs))
@@ -401,6 +406,7 @@ def generate_dataset(set, noisy=False, id_mapping=False, all_pairs=True):
     dataset_traj_as = []
     dataset_traj_bs = []
     dataset_comps = []
+    dataset_comp_indices = []
 
     if (all_pairs):
         print("\t-->>-- Generating Dataset (all pairs)! --<<--")
@@ -410,24 +416,28 @@ def generate_dataset(set, noisy=False, id_mapping=False, all_pairs=True):
                 comps = get_comparisons(i, j, set, noisy=noisy)
                 flipped_comps = get_comparisons(j, i, set, noisy=noisy)
 
-                for c in comps:
+                for index, c in enumerate(comps):
                     if (id_mapping):
                         dataset_traj_as.append(i)
                         dataset_traj_bs.append(j)
                         dataset_comps.append(c)
+                        dataset_comp_indices.append(all_adjs.index(c))
                     else:
                         dataset_traj_as.append(input_trajs[i])
                         dataset_traj_bs.append(input_trajs[j])
                         dataset_comps.append(c)
-                for fc in flipped_comps:
+                        dataset_comp_indices.append(all_adjs.index(c))
+                for index, fc in enumerate(flipped_comps):
                     if (id_mapping):
                         dataset_traj_as.append(j)
                         dataset_traj_bs.append(i)
                         dataset_comps.append(fc)
+                        dataset_comp_indices.append(all_adjs.index(c))
                     else:
                         dataset_traj_as.append(input_trajs[j])
                         dataset_traj_bs.append(input_trajs[i])
                         dataset_comps.append(fc)
+                        dataset_comp_indices.append(all_adjs.index(c))
                     
     else:
         print("\t-->>-- Generating Dataset (random pairs)! --<<--")
@@ -442,26 +452,30 @@ def generate_dataset(set, noisy=False, id_mapping=False, all_pairs=True):
             comps = get_comparisons(i, j, set, noisy=noisy)
             flipped_comps = get_comparisons(j, i, set, noisy=noisy)
 
-            for c in comps:
+            for index, c in enumerate(comps):
                 if (id_mapping):
                     dataset_traj_as.append(i)
                     dataset_traj_bs.append(j)
                     dataset_comps.append(c)
+                    dataset_comp_indices.append(all_adjs.index(c))
                 else:
                     dataset_traj_as.append(input_trajs[i])
                     dataset_traj_bs.append(input_trajs[j])
                     dataset_comps.append(c)
-            for fc in flipped_comps:
+                    dataset_comp_indices.append(all_adjs.index(c))
+            for index, fc in enumerate(flipped_comps):
                 if (id_mapping):
                     dataset_traj_as.append(j)
                     dataset_traj_bs.append(i)
                     dataset_comps.append(fc)
+                    dataset_comp_indices.append(all_adjs.index(c))
                 else:
                     dataset_traj_as.append(input_trajs[j])
                     dataset_traj_bs.append(input_trajs[i])
                     dataset_comps.append(fc)
+                    dataset_comp_indices.append(all_adjs.index(c))
 
-    return dataset_traj_as, dataset_traj_bs, dataset_comps
+    return dataset_traj_as, dataset_traj_bs, dataset_comps, dataset_comp_indices
 
 
 if __name__ == '__main__':
@@ -514,9 +528,9 @@ if __name__ == '__main__':
     initialize_globals(use_gpt_dataset=use_gpt_dataset, split_train=split_train, split_test=split_test, split_val=split_val, split_lang_train=split_lang_train, split_lang_test=split_lang_test, split_lang_val=split_lang_val)
 
     
-    dataset_train_traj_as, dataset_train_traj_bs, dataset_train_comps = generate_dataset(set="train", noisy=noise_augmentation, id_mapping=id_mapping, all_pairs=all_pairs)
-    dataset_test_traj_as, dataset_test_traj_bs, dataset_test_comps = generate_dataset(set="test", noisy=noise_augmentation, id_mapping=id_mapping, all_pairs=all_pairs)
-    dataset_val_traj_as, dataset_val_traj_bs, dataset_val_comps = generate_dataset(set="val", noisy=noise_augmentation, id_mapping=id_mapping, all_pairs=all_pairs)
+    dataset_train_traj_as, dataset_train_traj_bs, dataset_train_comps, dataset_train_comp_indices = generate_dataset(set="train", noisy=noise_augmentation, id_mapping=id_mapping, all_pairs=all_pairs)
+    dataset_test_traj_as, dataset_test_traj_bs, dataset_test_comps, dataset_test_comp_indices = generate_dataset(set="test", noisy=noise_augmentation, id_mapping=id_mapping, all_pairs=all_pairs)
+    dataset_val_traj_as, dataset_val_traj_bs, dataset_val_comps, dataset_val_comp_indices = generate_dataset(set="val", noisy=noise_augmentation, id_mapping=id_mapping, all_pairs=all_pairs)
 
 
 
@@ -587,6 +601,7 @@ if __name__ == '__main__':
     np.save(os.path.join(train_dir, "traj_a_indexes.npy"), np.array(dataset_train_traj_as))
     np.save(os.path.join(train_dir, "traj_b_indexes.npy"), np.array(dataset_train_traj_bs))
     np.save(os.path.join(train_dir, "nlcomps.npy"), np.array(dataset_train_comps))
+    np.save(os.path.join(train_dir, "nlcomp_indexes.npy"), np.array(dataset_train_comp_indices))  
     # saved earlier in split_dataset()
     # np.save(os.path.join(train_dir, "trajs.npy"), np.array(observations_train))
     # np.save(os.path.join(train_dir, "actions.npy"), np.array(actions_train))
@@ -594,6 +609,7 @@ if __name__ == '__main__':
     np.save(os.path.join(test_dir, "traj_a_indexes.npy"), np.array(dataset_test_traj_as))
     np.save(os.path.join(test_dir, "traj_b_indexes.npy"), np.array(dataset_test_traj_bs))
     np.save(os.path.join(test_dir, "nlcomps.npy"), np.array(dataset_test_comps))
+    np.save(os.path.join(test_dir, "nlcomp_indexes.npy"), np.array(dataset_test_comp_indices))
     # saved earlier in split_dataset()
     # np.save(os.path.join(test_dir, "trajs.npy"), np.array(observations_test))
     # np.save(os.path.join(test_dir, "actions.npy"), np.array(actions_test))
@@ -601,6 +617,7 @@ if __name__ == '__main__':
     np.save(os.path.join(val_dir, "traj_a_indexes.npy"), np.array(dataset_val_traj_as))
     np.save(os.path.join(val_dir, "traj_b_indexes.npy"), np.array(dataset_val_traj_bs))
     np.save(os.path.join(val_dir, "nlcomps.npy"), np.array(dataset_val_comps))
+    np.save(os.path.join(val_dir, "nlcomp_indexes.npy"), np.array(dataset_val_comp_indices))
     # saved earlier in split_dataset()
     # np.save(os.path.join(val_dir, "trajs.npy"), np.array(observations_val))
     # np.save(os.path.join(val_dir, "actions.npy"), np.array(actions_val))
