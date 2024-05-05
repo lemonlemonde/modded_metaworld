@@ -100,6 +100,24 @@ def split_dataset(split_train, split_val, split_test, size, split_lang_train, sp
     feature_vals_test = [feature_vals[i] for i in test_indices]
     feature_vals_val = [feature_vals[i] for i in val_indices]
 
+    # observations
+    observations_train = [observations[i] for i in train_indices]
+    observations_test = [observations[i] for i in test_indices]
+    observations_val = [observations[i] for i in val_indices]
+    # we don't use observations for now, so just save for training later
+    np.save(os.path.join(train_dir, "trajs.npy"), np.array(observations_train))
+    np.save(os.path.join(test_dir, "trajs.npy"), np.array(observations_test))
+    np.save(os.path.join(val_dir, "trajs.npy"), np.array(observations_val))
+
+    # actions
+    actions_train = [actions[i] for i in train_indices]
+    actions_test = [actions[i] for i in test_indices]
+    actions_val = [actions[i] for i in val_indices]
+    # we don't use actions for now, so just save for training later
+    np.save(os.path.join(train_dir, "actions.npy"), np.array(actions_train))
+    np.save(os.path.join(test_dir, "actions.npy"), np.array(actions_test))
+    np.save(os.path.join(val_dir, "actions.npy"), np.array(actions_val))
+
     feature_vals = []
 
     # ------------------------------
@@ -177,6 +195,14 @@ def split_dataset(split_train, split_val, split_test, size, split_lang_train, sp
 
     lesser_adjs = []
 
+    # now read in images.npy and save them as npy
+    images = np.load(os.path.join(cur_dir, "../dataset/images.npy"))
+    image_dir = os.path.join(cur_dir, "../dataset")
+    np.save(os.path.join(train_dir, "traj_img_obs.npy"), images[train_indices])
+    np.save(os.path.join(test_dir, "traj_img_obs.npy"), images[test_indices])
+    np.save(os.path.join(val_dir, "traj_img_obs.npy"), images[val_indices])
+
+
 
 # reads states and actions from files and returns them as a list of trajectories
     # every trajectory = (observations + actions) = (500, 43) for 500 timesteps
@@ -188,6 +214,8 @@ def form_trajectories():
     
     formatted_trajs = []
     f_vals = []
+    all_actions = []
+    all_observations = []
 
     # e.g., 0-0-0-0
     for variant in index_weights:
@@ -227,8 +255,11 @@ def form_trajectories():
             # Add formatted trajectory
             observations = np.array(observations)
             actions = np.array(actions)
+
             traj = np.concatenate((observations, actions), axis=-1)
             formatted_trajs.append(traj)
+            all_observations.append(observations)
+            all_actions.append(actions)
 
             # Add feature values
             f_vals.append([height_vals] + [velocity_vals] + [distance_to_obj_vals] + [avg_sum_vals])
@@ -236,7 +267,7 @@ def form_trajectories():
     # print("NUM_TIMESTEPS: " + str(NUM_TIMESTEPS))
     # print("fvals shape: ")
     # print(np.array(f_vals).shape)
-    return formatted_trajs, f_vals
+    return formatted_trajs, f_vals, all_observations, all_actions
 
 # modifies global variables greater_adjs and lesser_adjs with gpt augmented dataset json file
 def get_gpt_dataset():
@@ -315,7 +346,7 @@ def get_comparisons(i, j, set, noisy=False):
 
 
 def initialize_globals(use_gpt_dataset, split_train, split_test, split_val, split_lang_train, split_lang_test, split_lang_val):
-    global env, trajs, feature_vals, index_weights
+    global env, trajs, feature_vals, index_weights, observations, actions
 
     print("\t-->>-- Initializing Global Variables! --<<--")
 
@@ -334,7 +365,7 @@ def initialize_globals(use_gpt_dataset, split_train, split_test, split_val, spli
     env._freeze_rand_vec = False
 
     # init trajs and feature_vals
-    trajs, feature_vals = form_trajectories()
+    trajs, feature_vals, observations, actions = form_trajectories()
 
     # this modifies greater_adjs and lesser_adjs
     if (use_gpt_dataset):
@@ -531,21 +562,32 @@ if __name__ == '__main__':
 
     cur_dir = os.path.dirname(os.path.abspath(__file__))
     dir = os.path.join(cur_dir, "../dataset")
+    train_dir = os.path.join(dir, "train")
+    test_dir = os.path.join(dir, "test")
+    val_dir = os.path.join(dir, "val")
     if (os.path.exists(dir) == False):
             os.makedirs(dir)
+            os.makedirs(train_dir)
+            os.makedirs(test_dir)
+            os.makedirs(val_dir)
 
-    np.save(os.path.join(dir, "dataset_train_traj_as.npy"), np.array(dataset_train_traj_as))
-    np.save(os.path.join(dir, "dataset_train_traj_bs.npy"), np.array(dataset_train_traj_bs))
+    np.save(os.path.join(train_dir, "traj_a_indexes.npy"), np.array(dataset_train_traj_as))
+    np.save(os.path.join(train_dir, "traj_b_indexes.npy"), np.array(dataset_train_traj_bs))
+    np.save(os.path.join(train_dir, "nlcomps.npy"), np.array(dataset_train_comps))
+    # np.save(os.path.join(train_dir, "trajs.npy"), np.array(observations_train))
+    # np.save(os.path.join(train_dir, "actions.npy"), np.array(actions_train))
 
-    np.save(os.path.join(dir, "dataset_test_traj_as.npy"), np.array(dataset_test_traj_as))
-    np.save(os.path.join(dir, "dataset_test_traj_bs.npy"), np.array(dataset_test_traj_bs))
+    np.save(os.path.join(test_dir, "traj_a_indexes.npy"), np.array(dataset_test_traj_as))
+    np.save(os.path.join(test_dir, "traj_b_indexes.npy"), np.array(dataset_test_traj_bs))
+    np.save(os.path.join(test_dir, "nlcomps.npy"), np.array(dataset_test_comps))
+    np.save(os.path.join(test_dir, "trajs.npy"), np.array(observations_test))
+    np.save(os.path.join(test_dir, "actions.npy"), np.array(actions_test))
 
-    np.save(os.path.join(dir, "dataset_val_traj_as.npy"), np.array(dataset_val_traj_as))
-    np.save(os.path.join(dir, "dataset_val_traj_bs.npy"), np.array(dataset_val_traj_bs))
-
-    np.save(os.path.join(dir, "dataset_train_comps.npy"), np.array(dataset_train_comps))
-    np.save(os.path.join(dir, "dataset_test_comps.npy"), np.array(dataset_test_comps))
-    np.save(os.path.join(dir, "dataset_val_comps.npy"), np.array(dataset_val_comps))
+    np.save(os.path.join(val_dir, "traj_a_indexes.npy"), np.array(dataset_val_traj_as))
+    np.save(os.path.join(val_dir, "traj_b_indexes.npy"), np.array(dataset_val_traj_bs))
+    np.save(os.path.join(val_dir, "nlcomps.npy"), np.array(dataset_val_comps))
+    np.save(os.path.join(val_dir, "trajs.npy"), np.array(observations_val))
+    np.save(os.path.join(val_dir, "actions.npy"), np.array(actions_val))
 
     print("-->>-->>-- Done making dataset!!! --<<--<<--")
 
@@ -554,21 +596,21 @@ if __name__ == '__main__':
     # open np files and check
     print("-->>-->>-- Checking saved files... --<<--<<--")
     print("dataset_train_traj_as:")
-    traj_as = np.load(os.path.join(dir, "dataset_train_traj_as.npy"))
+    traj_as = np.load(os.path.join(train_dir, "traj_a_indexes.npy"))
     print(traj_as)
     print(traj_as.shape)
     # for i in range(0, 17):
     #     print(traj_as[i])
 
     print("dataset_train_traj_bs:")
-    traj_bs = np.load(os.path.join(dir, "dataset_train_traj_bs.npy"))
+    traj_bs = np.load(os.path.join(train_dir, "traj_b_indexes.npy"))
     print(traj_bs)
     print(traj_bs.shape)
     # for i in range(0, 17):
     #     print(traj_bs[i])
 
     print("dataset_train_comps:")
-    comps = np.load(os.path.join(dir, "dataset_train_comps.npy"))
+    comps = np.load(os.path.join(train_dir, "dataset_train_comps.npy"))
     print(comps)
     print(comps.shape)
 
