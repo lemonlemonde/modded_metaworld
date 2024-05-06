@@ -285,7 +285,7 @@ def form_trajectories():
 
 # modifies global variables greater_adjs and lesser_adjs with gpt augmented dataset json file
 def get_gpt_dataset():
-    global greater_adjs, lesser_adjs
+    global greater_adjs, lesser_adjs, all_adjs
 
     cur_dir = os.path.dirname(os.path.abspath(__file__))
     dir = os.path.join(cur_dir, "../dataset")
@@ -600,7 +600,7 @@ if __name__ == '__main__':
 
     np.save(os.path.join(train_dir, "traj_a_indexes.npy"), np.array(dataset_train_traj_as))
     np.save(os.path.join(train_dir, "traj_b_indexes.npy"), np.array(dataset_train_traj_bs))
-    np.save(os.path.join(train_dir, "nlcomps.npy"), np.array(dataset_train_comps))
+    np.save(os.path.join(train_dir, "unique_nlcomps.npy"), np.array(dataset_train_comps))
     np.save(os.path.join(train_dir, "nlcomp_indexes.npy"), np.array(dataset_train_comp_indices))  
     # saved earlier in split_dataset()
     # np.save(os.path.join(train_dir, "trajs.npy"), np.array(observations_train))
@@ -608,7 +608,7 @@ if __name__ == '__main__':
 
     np.save(os.path.join(test_dir, "traj_a_indexes.npy"), np.array(dataset_test_traj_as))
     np.save(os.path.join(test_dir, "traj_b_indexes.npy"), np.array(dataset_test_traj_bs))
-    np.save(os.path.join(test_dir, "nlcomps.npy"), np.array(dataset_test_comps))
+    np.save(os.path.join(test_dir, "unique_nlcomps.npy"), np.array(dataset_test_comps))
     np.save(os.path.join(test_dir, "nlcomp_indexes.npy"), np.array(dataset_test_comp_indices))
     # saved earlier in split_dataset()
     # np.save(os.path.join(test_dir, "trajs.npy"), np.array(observations_test))
@@ -616,7 +616,7 @@ if __name__ == '__main__':
 
     np.save(os.path.join(val_dir, "traj_a_indexes.npy"), np.array(dataset_val_traj_as))
     np.save(os.path.join(val_dir, "traj_b_indexes.npy"), np.array(dataset_val_traj_bs))
-    np.save(os.path.join(val_dir, "nlcomps.npy"), np.array(dataset_val_comps))
+    np.save(os.path.join(val_dir, "unique_nlcomps.npy"), np.array(dataset_val_comps))
     np.save(os.path.join(val_dir, "nlcomp_indexes.npy"), np.array(dataset_val_comp_indices))
     # saved earlier in split_dataset()
     # np.save(os.path.join(val_dir, "trajs.npy"), np.array(observations_val))
