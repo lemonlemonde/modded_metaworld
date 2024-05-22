@@ -9,6 +9,7 @@ import cv2
 import torch
 from torchvision.transforms import v2
 from PIL import Image
+from einops import rearrange
 
 def get_images_from_mp4s():
     # directory
@@ -46,7 +47,7 @@ def get_images_from_mp4s():
                             if not success:
                                 break
 
-                            
+                            image = rearrange(image, 'b t h w c -> (b t) c h w')
 
                             center = image.shape
                             w = 400
