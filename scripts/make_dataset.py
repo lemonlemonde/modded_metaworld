@@ -136,6 +136,22 @@ def split_dataset(split_train, split_val, split_test, size, split_lang_train, sp
 
     # ------------------------------
 
+    # now read in images.npy and save them as npy
+    images = np.load(os.path.join(cur_dir, "../dataset/images.npy"))
+    train_img_obs = np.array([images[i] for i in train_indices])
+    test_img_obs = np.array([images[i] for i in test_indices])
+    val_img_obs = np.array([images[i] for i in val_indices])
+    print("train img shape")
+    print(train_img_obs.shape)
+    print("test img os shape")
+    print(test_img_obs.shape)
+    print(val_img_obs.shape)
+    np.save(os.path.join(train_dir, "traj_img_obs.npy"), train_img_obs)
+    np.save(os.path.join(test_dir, "traj_img_obs.npy"), test_img_obs)
+    np.save(os.path.join(val_dir, "traj_img_obs.npy"), val_img_obs)
+
+    # ------------------------------
+
     # get indices
     split_lang_train /= 4
     split_lang_test /= 4
@@ -209,12 +225,6 @@ def split_dataset(split_train, split_val, split_test, size, split_lang_train, sp
 
     lesser_adjs = []
 
-    # now read in images.npy and save them as npy
-    images = np.load(os.path.join(cur_dir, "../dataset/images.npy"))
-    image_dir = os.path.join(cur_dir, "../dataset")
-    np.save(os.path.join(train_dir, "traj_img_obs.npy"), images[train_indices])
-    np.save(os.path.join(test_dir, "traj_img_obs.npy"), images[test_indices])
-    np.save(os.path.join(val_dir, "traj_img_obs.npy"), images[val_indices])
 
 
 

@@ -47,10 +47,6 @@ def get_images_from_mp4s():
                             if not success:
                                 break
 
-                            # 'b t h w c'
-                            # let batch = 1
-
-
                             center = image.shape
                             w = 400
                             h = 400
@@ -79,7 +75,7 @@ def get_images_from_mp4s():
                             print("Variant: ", variant, " trial: ", m, " doesn't have 501 frames!!!!!")
                             defects.append("variant: " + str(variant) + "trial: " + str(m))
 
-
+                        images.pop()
                         batches.append(np.stack(images))
 
     for i in defects:
@@ -95,6 +91,8 @@ def get_images_from_mp4s():
     # images = np.array(images)
     # images = images[np.newaxis, :]
     batches = np.stack(batches)
+    print("batch shape")
+    print(batches.shape)
     np.save(os.path.join(image_dir, "images.npy"), batches)
 
 if __name__ == '__main__':
