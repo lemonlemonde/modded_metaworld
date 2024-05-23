@@ -101,7 +101,7 @@ def split_dataset(split_train, split_val, split_test, size, split_lang_train, sp
     feature_vals_test = [feature_vals[i] for i in test_indices]
     feature_vals_val = [feature_vals[i] for i in val_indices]
 
-    # observations
+    # observations (don't need since trajs = (obs + actions))
     observations_train = [observations[i] for i in train_indices]
     observations_test = [observations[i] for i in test_indices]
     observations_val = [observations[i] for i in val_indices]
@@ -119,9 +119,9 @@ def split_dataset(split_train, split_val, split_test, size, split_lang_train, sp
         os.makedirs(test_dir)
     if (os.path.exists(val_dir) == False):
         os.makedirs(val_dir)
-    np.save(os.path.join(train_dir, "trajs.npy"), np.array(observations_train))
-    np.save(os.path.join(test_dir, "trajs.npy"), np.array(observations_test))
-    np.save(os.path.join(val_dir, "trajs.npy"), np.array(observations_val))
+    np.save(os.path.join(train_dir, "trajs.npy"), np.array(trajs_train))
+    np.save(os.path.join(test_dir, "trajs.npy"), np.array(trajs_test))
+    np.save(os.path.join(val_dir, "trajs.npy"), np.array(trajs_val))
 
     # actions
     actions_train = [actions[i] for i in train_indices]
