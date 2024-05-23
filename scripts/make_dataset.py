@@ -649,9 +649,10 @@ if __name__ == '__main__':
     #     print(traj_bs[i])
 
     print("dataset_train_comps:")
-    comps = np.load(os.path.join(train_dir, "nlcomps.npy"))
-    print(comps)
-    print(comps.shape)
+    with open(os.path.join(train_dir, "unique_nlcomps.json"), 'r') as file:
+        comps = json.load(file)
+        # print(comps)
+    # print(comps.shape)
 
     # -----------
 
@@ -670,9 +671,10 @@ if __name__ == '__main__':
     #     print(traj_bs[i])
 
     print("dataset_test_comps:")
-    comps = np.load(os.path.join(test_dir, "nlcomps.npy"))
-    print(comps)
-    print(comps.shape)
+    with open(os.path.join(test_dir, "unique_nlcomps.json"), 'r') as file:
+        comps = json.load(file)
+        # print(comps)
+    # print(comps.shape)
 
     # -----------
 
@@ -691,7 +693,8 @@ if __name__ == '__main__':
     #     print(traj_bs[i])
 
     print("dataset_val_comps:")
-    comps = np.load(os.path.join(val_dir, "nlcomps.npy"))
-    print(comps)
-    print(comps.shape)
+    with open(os.path.join(val_dir, "unique_nlcomps.json"), 'r') as file:
+        comps = json.load(file)
+        # print(comps)
+    # print(comps.shape)
     print("-->>-->>-- Check ^^^ everything looks okay?? --<<--<<--")

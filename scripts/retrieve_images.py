@@ -16,8 +16,7 @@ def get_images_from_mp4s():
     cur_dir = os.path.dirname(os.path.abspath(__file__))
     trajectory_dir = os.path.join(cur_dir, "../trajectories")
 
-    # images npy array
-    images = []
+    batches = []
 
     # error
     defects = []
@@ -31,6 +30,7 @@ def get_images_from_mp4s():
                 for l in range(3):
                     variant = str(i) + "-" + str(j) + "-" + str(k) + "-" + str(l)
                     for m in range (4):
+                        images = []
                         print("Retrieving images for variant: " + variant + " trial: " + str(m))
                         # trial
                         # get the mp4 from the directory
@@ -47,7 +47,9 @@ def get_images_from_mp4s():
                             if not success:
                                 break
 
-                            image = rearrange(image, 'b t h w c -> (b t) c h w')
+                            # 'b t h w c'
+                            # let batch = 1
+
 
                             center = image.shape
                             w = 400
@@ -77,12 +79,23 @@ def get_images_from_mp4s():
                             print("Variant: ", variant, " trial: ", m, " doesn't have 501 frames!!!!!")
                             defects.append("variant: " + str(variant) + "trial: " + str(m))
 
+
+                        batches.append(np.stack(images))
+
     for i in defects:
         print(defects)
 
     # save images as npy
     image_dir = os.path.join(cur_dir, "../dataset")
-    np.save(os.path.join(image_dir, "images.npy"), images)
+    # print("before:")
+    # print(images[0])
+    # images = np.insert(images, 0, 1, axis=-1)
+    # print("after:")
+    # print(images[0])
+    # images = np.array(images)
+    # images = images[np.newaxis, :]
+    batches = np.stack(batches)
+    np.save(os.path.join(image_dir, "images.npy"), batches)
 
 if __name__ == '__main__':
     print("-->>-->>-- Retrieving images from mp4s! --<<--<<--")
