@@ -70,10 +70,10 @@ def get_images_from_mp4s():
                                 flag = True
 
                             count += 1
-                        print("Done variant: ", variant, "trial: ", m, "frames: ", count)
+                        print("Done variant:", variant, " trial:", m, " frames:", count)
                         if (count != 501):
-                            print("Variant: ", variant, " trial: ", m, " doesn't have 501 frames!!!!!")
-                            defects.append("variant: " + str(variant) + "trial: " + str(m))
+                            print("Variant:", variant, " trial:", m, " doesn't have 501 frames!!!!!")
+                            defects.append("variant:" + str(variant) + " trial: " + str(m))
 
                         images.pop()
                         batches.append(np.stack(images))

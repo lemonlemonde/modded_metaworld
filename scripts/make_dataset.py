@@ -101,16 +101,21 @@ def split_dataset(split_train, split_val, split_test, size, split_lang_train, sp
     feature_vals_test = [feature_vals[i] for i in test_indices]
     feature_vals_val = [feature_vals[i] for i in val_indices]
 
-    # observations (don't need since trajs = (obs + actions))
-    observations_train = [observations[i] for i in train_indices]
-    observations_test = [observations[i] for i in test_indices]
-    observations_val = [observations[i] for i in val_indices]
     # we don't use observations for now, so just save for training later
     cur_dir = os.path.dirname(os.path.abspath(__file__))
     dir = os.path.join(cur_dir, "../dataset")
     train_dir = os.path.join(dir, "train")
     test_dir = os.path.join(dir, "test")
     val_dir = os.path.join(dir, "val")
+    # save feature_vals
+    np.save(os.path.join(train_dir, "feature_vals.npy"), np.array(feature_vals_train))
+    np.save(os.path.join(test_dir, "feature_vals.npy"), np.array(feature_vals_test))
+    np.save(os.path.join(val_dir, "feature_vals.npy"), np.array(feature_vals_val))
+
+    # observations (don't need since trajs = (obs + actions))
+    observations_train = [observations[i] for i in train_indices]
+    observations_test = [observations[i] for i in test_indices]
+    observations_val = [observations[i] for i in val_indices]
     if (os.path.exists(dir) == False):
         os.makedirs(dir)
     if (os.path.exists(train_dir) == False):
@@ -268,8 +273,25 @@ def form_trajectories():
                 # Get obs and rewards
                 env.set_env_state(states[step])
                 obs = env._get_obs()
-                observations.append(obs)
                 reward, avg_sum, tcp_height, tcp_vel, tcp_to_obj, env_state = env.compute_reward_v2(actions[step], obs)
+                # env state (tuple) = joint state[0], mocap state (camera)[1]
+                    # joint_state (23) = time(1) + pos(10) + vel(10) + action,udd(2)
+                    # keep only pos and vel
+                # import ipdb; ipdb.set_trace()
+                joint_pos = env_state[0][1]
+                joint_vel = env_state[0][2]
+                obs = np.array(obs)
+                # original obs (39) = curr obs(18) + prev obs(18) + goal(3)
+                    # remove object quat and padding
+                    # remove prev obs
+                    # cur obs (18) = tcp pos(3) + grip dist(1) + obj pos(3) + obj quat(4) + obj padding(7)
+                    # prev obs (18)
+                    # goal (3)
+                obs = np.append(obs[0:7], obs[-3:39])
+                obs = np.concatenate([obs, np.array(joint_pos), np.array(joint_vel)])
+                # append velocity (1) to observation (39) = (40) dim
+                obs = np.append(obs, tcp_vel)
+                observations.append(obs)
                 
                 avg_sum_vals.append(avg_sum)
                 height_vals.append(tcp_height)
@@ -351,25 +373,38 @@ def generate_synthetic_lang_feedback(i, j, feature, set, noisy=False):
         if (noisy and np.random.rand() < prob):
             # by prob chance, return the opposite comparison\
             # j is greater
-            return greater_adjs[f][np.random.randint(len(greater_adjs[f]))]
+            temp = []
+            for i in range(10):
+                temp.append(greater_adjs[f][np.random.randint(len(greater_adjs[f]))])
+            return temp
         else:
             # i is greater
-            return lesser_adjs[f][np.random.randint(len(lesser_adjs[f]))]
+            temp = []
+            for i in range(10):
+                temp.append(lesser_adjs[f][np.random.randint(len(lesser_adjs[f]))])
+            return temp
     else:
         # j is greater
         if (noisy and np.random.rand() < prob):
             # by prob chance, return the opposite comparison
             # i is greater
             # print("some adj: " + str(lesser_adjs[f][np.random.randint(len(lesser_adjs[f]))]))
-            return lesser_adjs[f][np.random.randint(len(lesser_adjs[f]))]
+            temp = []
+            for i in range(10):
+                temp.append(lesser_adjs[f][np.random.randint(len(lesser_adjs[f]))])
+            return temp
         else:
             # j is greater
-            return greater_adjs[f][np.random.randint(len(greater_adjs[f]))]
+            temp = []
+            for i in range(10):
+                temp.append(greater_adjs[f][np.random.randint(len(greater_adjs[f]))])
+            return temp
 
 def get_comparisons(i, j, set, noisy=False):
     out = []
-    for feature in ['height', 'velocity', 'distance_to_object', 'sum']:
-        out.append(generate_synthetic_lang_feedback(i, j, feature, set, noisy=noisy))
+    # for feature in ['height', 'velocity', 'distance_to_object', 'sum']:
+    for feature in ['velocity']:
+        out.extend(generate_synthetic_lang_feedback(i, j, feature, set, noisy=noisy))
     return out
 
 

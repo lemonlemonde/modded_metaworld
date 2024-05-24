@@ -39,6 +39,7 @@ class SawyerMocapBase(MujocoEnv, metaclass=abc.ABCMeta):
         return tcp_center
 
     def get_env_state(self):
+        # import ipdb; ipdb.set_trace()
         joint_state = self.sim.get_state()
         mocap_state = self.data.mocap_pos, self.data.mocap_quat
         state = joint_state, mocap_state
