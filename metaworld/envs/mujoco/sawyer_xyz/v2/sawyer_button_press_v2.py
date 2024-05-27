@@ -161,6 +161,7 @@ class SawyerButtonPressEnvV2(SawyerXYZEnv):
         tcp = self.tcp_center
         cur = tcp
 
+
         # calculate height
         tcp_height = tcp[2]
 
@@ -168,6 +169,10 @@ class SawyerButtonPressEnvV2(SawyerXYZEnv):
         if (self.prev is None):
             self.prev = cur
         tcp_vel = reward_utils.combined_velocity(cur[0], cur[1], cur[2], self.prev[0], self.prev[1], self.prev[2])
+
+        curr_pos, prev_pos = obs[:3], obs[18:21]
+        pos_vel = np.linalg.norm(curr_pos - prev_pos)
+        # import ipdb; ipdb.set_trace()
         # print("tcp: ", tcp)
 
         # distance of end effector to button

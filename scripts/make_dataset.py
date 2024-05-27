@@ -280,17 +280,29 @@ def form_trajectories():
                 # import ipdb; ipdb.set_trace()
                 joint_pos = env_state[0][1]
                 joint_vel = env_state[0][2]
+
+                # METHOD 2
                 obs = np.array(obs)
-                # original obs (39) = curr obs(18) + prev obs(18) + goal(3)
-                    # remove object quat and padding
-                    # remove prev obs
-                    # cur obs (18) = tcp pos(3) + grip dist(1) + obj pos(3) + obj quat(4) + obj padding(7)
-                    # prev obs (18)
-                    # goal (3)
-                obs = np.append(obs[0:7], obs[-3:39])
-                obs = np.concatenate([obs, np.array(joint_pos), np.array(joint_vel)])
-                # append velocity (1) to observation (39) = (40) dim
-                obs = np.append(obs, tcp_vel)
+                cur_tcp_pos = obs[0:3]
+                prev_tcp_pos = obs[18:21]
+                pos_diff = cur_tcp_pos - prev_tcp_pos
+                # 3
+                obs = np.array(pos_diff)
+
+
+
+                # METHOD 1
+                # obs = np.array(obs)
+                # # original obs (39) = curr obs(18) + prev obs(18) + goal(3)
+                #     # remove object quat and padding
+                #     # remove prev obs
+                #     # cur obs (18) = tcp pos(3) + grip dist(1) + obj pos(3) + obj quat(4) + obj padding(7)
+                #     # prev obs (18)
+                #     # goal (3)
+                # obs = np.append(obs[0:7], obs[-3:39])
+                # obs = np.concatenate([obs, np.array(joint_pos), np.array(joint_vel)])
+                # # append velocity (1) to observation (39) = (40) dim
+                # obs = np.append(obs, tcp_vel)
                 observations.append(obs)
                 
                 avg_sum_vals.append(avg_sum)
