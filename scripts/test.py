@@ -14,6 +14,7 @@ f_vals = np.load(os.path.join(train_dir, "feature_vals.npy"))
 nlcomp_indexes = np.load(os.path.join(train_dir, "nlcomp_indexes.npy"))
 with open(os.path.join(train_dir, "unique_nlcomps.json"), 'r') as openfile:
     unique_nlcomps = json.load(openfile)
+    print("unique nlcomps len: ", len(unique_nlcomps))
 
 print("lenght:")
 print(len(trajs_a_indexes))

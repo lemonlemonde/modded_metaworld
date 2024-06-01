@@ -24,7 +24,7 @@ feature_vals_test = []
 feature_vals_val = []
 
 index_weights = []
-features = ['height', 'velocity', 'distance_to_object', 'sum']
+features = ['height', 'velocity', 'distance_to_object']
 
 # default 500, will be ovewritten by num columnns in actions.json
 NUM_TIMESTEPS = 500
@@ -39,7 +39,7 @@ greater_adjs = [greater_height_adjs] + [greater_velocity_adjs] + [greater_distan
 lesser_height_adjs = ["Move lower.", "Move more down.", "Move at a lesser height."]
 lesser_velocity_adjs = ["Move slower.", "Move more moderate.", "Move more sluggish.", "Move at a lower speed."]
 lesser_distance_adjs = ["Move closer to the button.", "Move nearer to the button.", "Move more nearby to the button."]
-lesser_sum_adjs = ["Press the button worse.", "Press the button not as well."]
+# lesser_sum_adjs = ["Press the button worse.", "Press the button not as well."]
 lesser_adjs = [lesser_height_adjs] + [lesser_velocity_adjs] + [lesser_distance_adjs]
 
 all_adjs = []
@@ -252,6 +252,11 @@ def form_trajectories():
     all_actions = []
     all_observations = []
 
+    all_height_vals = []
+    all_velocity_vals = []
+    all_distance_to_obj_vals = []
+    all_avg_sum_vals = []
+
     # e.g., 0-0-0-0
     for variant in index_weights:
         # 0 to 3
@@ -284,18 +289,16 @@ def form_trajectories():
                     # joint_state (23) = time(1) + pos(10) + vel(10) + action,udd(2)
                     # keep only pos and vel
                 # import ipdb; ipdb.set_trace()
-                joint_pos = env_state[0][1]
-                joint_vel = env_state[0][2]
+                # joint_pos = env_state[0][1]
+                # joint_vel = env_state[0][2]
+
+                obs = np.array(obs)
 
                 # METHOD 2
-                # obs = np.array(obs)
                 cur_tcp_pos = obs[0:3]
                 prev_tcp_pos = obs[18:21]
                 pos_diff = cur_tcp_pos - prev_tcp_pos
-                # 3
                 obs = np.append(obs, pos_diff)
-
-
 
                 # METHOD 1
                 # obs = np.array(obs)
@@ -309,9 +312,10 @@ def form_trajectories():
                 # obs = np.concatenate([obs, np.array(joint_pos), np.array(joint_vel)])
                 # # append velocity (1) to observation (39) = (40) dim
                 # obs = np.append(obs, tcp_vel)
+
                 observations.append(obs)
                 
-                avg_sum_vals.append(avg_sum)
+                # avg_sum_vals.append(avg_sum)
                 height_vals.append(tcp_height)
                 velocity_vals.append(tcp_vel)
                 distance_to_obj_vals.append(tcp_to_obj)
@@ -325,9 +329,34 @@ def form_trajectories():
             all_observations.append(observations)
             all_actions.append(actions)
 
-            # Add feature values
-            f_vals.append([height_vals] + [velocity_vals] + [distance_to_obj_vals] + [avg_sum_vals])
+            all_height_vals.extend(height_vals)
+            all_velocity_vals.extend(velocity_vals)
+            all_distance_to_obj_vals.extend(distance_to_obj_vals)
+            # all_avg_sum_vals.extend(avg_sum_vals)
 
+            # Add feature values
+            f_vals.append([height_vals] + [velocity_vals] + [distance_to_obj_vals])
+
+    # Standardize
+    # for every traj in f_vals
+    print("len of f_vals: " + str(len(f_vals)))
+    for traj in range(0, len(f_vals)):
+        # for every feature for the traj
+        for f in range(0, len(f_vals[traj])):
+            # standardize
+            if (f == 0):
+                f_vals[traj][f] = (f_vals[traj][f] - np.mean(all_height_vals)) / np.std(all_height_vals)
+            elif (f == 1):
+                f_vals[traj][f] = (f_vals[traj][f] - np.mean(all_velocity_vals)) / np.std(all_velocity_vals)
+            elif (f == 2):
+                f_vals[traj][f] = (f_vals[traj][f] - np.mean(all_distance_to_obj_vals)) / np.std(all_distance_to_obj_vals)
+            # elif (f == 3):
+            #     f_vals[traj][f] = (f_vals[traj][f] - np.mean(all_avg_sum_vals)) / np.std(all_avg_sum_vals)
+            else:
+                print("ERROR: f_vals index out of bounds")
+                return
+
+# [[[1, 2, 3, 4], [5, 6, 7, 8]], [[1, 2, 3, 4], [5, 6, 7, 8]]]
     # print("NUM_TIMESTEPS: " + str(NUM_TIMESTEPS))
     # print("fvals shape: ")
     # print(np.array(f_vals).shape)
@@ -339,7 +368,6 @@ def get_gpt_dataset():
 
     cur_dir = os.path.dirname(os.path.abspath(__file__))
     dir = os.path.join(cur_dir, "../dataset")
-
     with open(os.path.join(dir, "ver2_gpt_augmented_dataset_metaworld.json"), 'r') as openfile:
         gpt_dataset = json.load(openfile)
     
@@ -719,7 +747,7 @@ if __name__ == '__main__':
     with open(os.path.join(train_dir, "nlcomps.json"), 'r') as file:
         comps = json.load(file)
         # print(comps)
-    # print(comps.shape)
+    print("comps len:", len(comps))
 
     # -----------
 
@@ -741,7 +769,7 @@ if __name__ == '__main__':
     with open(os.path.join(test_dir, "nlcomps.json"), 'r') as file:
         comps = json.load(file)
         # print(comps)
-    # print(comps.shape)
+        print("comps len:", len(comps))
 
     # -----------
 
@@ -763,5 +791,5 @@ if __name__ == '__main__':
     with open(os.path.join(val_dir, "nlcomps.json"), 'r') as file:
         comps = json.load(file)
         # print(comps)
-    # print(comps.shape)
+        print("comps len:", len(comps))
     print("-->>-->>-- Check ^^^ everything looks okay?? --<<--<<--")
