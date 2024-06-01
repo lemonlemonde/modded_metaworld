@@ -246,6 +246,11 @@ def form_trajectories():
     all_actions = []
     all_observations = []
 
+    all_height_vals = []
+    all_velocity_vals = []
+    all_distance_to_obj_vals = []
+    all_avg_sum_vals = []
+
     # e.g., 0-0-0-0
     for variant in index_weights:
         # 0 to 3
@@ -278,16 +283,16 @@ def form_trajectories():
                     # joint_state (23) = time(1) + pos(10) + vel(10) + action,udd(2)
                     # keep only pos and vel
                 # import ipdb; ipdb.set_trace()
-                joint_pos = env_state[0][1]
-                joint_vel = env_state[0][2]
+                # joint_pos = env_state[0][1]
+                # joint_vel = env_state[0][2]
 
                 # METHOD 2
                 obs = np.array(obs)
-                cur_tcp_pos = obs[0:3]
-                prev_tcp_pos = obs[18:21]
-                pos_diff = cur_tcp_pos - prev_tcp_pos
+                # cur_tcp_pos = obs[0:3]
+                # prev_tcp_pos = obs[18:21]
+                # pos_diff = cur_tcp_pos - prev_tcp_pos
                 # 3
-                obs = np.array(pos_diff)
+                # obs = np.array(pos_diff)
 
 
 
@@ -319,9 +324,35 @@ def form_trajectories():
             all_observations.append(observations)
             all_actions.append(actions)
 
+            all_height_vals.extend(height_vals)
+            all_velocity_vals.extend(velocity_vals)
+            all_distance_to_obj_vals.extend(distance_to_obj_vals)
+            all_avg_sum_vals.extend(avg_sum_vals)
+
             # Add feature values
             f_vals.append([height_vals] + [velocity_vals] + [distance_to_obj_vals] + [avg_sum_vals])
 
+    # Standardize
+    # for every traj in f_vals
+    print("len of f_vals: " + str(len(f_vals)))
+    for traj in range(0, len(f_vals)):
+        # for every feature for the traj
+        print("len of f_vals[traj]: " + str(len(f_vals[traj])))
+        for f in range(0, len(f_vals[traj])):
+            # standardize
+            if (f == 0):
+                f_vals[traj][f] = (f_vals[traj][f] - np.mean(all_height_vals)) / np.std(all_height_vals)
+            elif (f == 1):
+                f_vals[traj][f] = (f_vals[traj][f] - np.mean(all_velocity_vals)) / np.std(all_velocity_vals)
+            elif (f == 2):
+                f_vals[traj][f] = (f_vals[traj][f] - np.mean(all_distance_to_obj_vals)) / np.std(all_distance_to_obj_vals)
+            elif (f == 3):
+                f_vals[traj][f] = (f_vals[traj][f] - np.mean(all_avg_sum_vals)) / np.std(all_avg_sum_vals)
+            else:
+                print("ERROR: f_vals index out of bounds")
+                return
+
+# [[[1, 2, 3, 4], [5, 6, 7, 8]], [[1, 2, 3, 4], [5, 6, 7, 8]]]
     # print("NUM_TIMESTEPS: " + str(NUM_TIMESTEPS))
     # print("fvals shape: ")
     # print(np.array(f_vals).shape)
@@ -333,7 +364,7 @@ def get_gpt_dataset():
 
     cur_dir = os.path.dirname(os.path.abspath(__file__))
     dir = os.path.join(cur_dir, "../dataset")
-    with open(os.path.join(dir, "gpt_augmented_dataset_metaworld.json"), 'r') as openfile:
+    with open(os.path.join(dir, "ver2_gpt_augmented_dataset_metaworld.json"), 'r') as openfile:
         gpt_dataset = json.load(openfile)
     
     greater_adjs = [gpt_dataset["greater_height"]] + [gpt_dataset["greater_velocity"]] + [gpt_dataset["greater_distance"]] + [gpt_dataset["greater_sum"]]
@@ -385,38 +416,43 @@ def generate_synthetic_lang_feedback(i, j, feature, set, noisy=False):
         if (noisy and np.random.rand() < prob):
             # by prob chance, return the opposite comparison\
             # j is greater
-            temp = []
-            for i in range(10):
-                temp.append(greater_adjs[f][np.random.randint(len(greater_adjs[f]))])
-            return temp
+            # temp = []
+            # for i in range(10):
+            #     temp.append(greater_adjs[f][np.random.randint(len(greater_adjs[f]))])
+            # return temp
+            return(greater_adjs[f][np.random.randint(len(greater_adjs[f]))])
         else:
             # i is greater
-            temp = []
-            for i in range(10):
-                temp.append(lesser_adjs[f][np.random.randint(len(lesser_adjs[f]))])
-            return temp
+            # temp = []
+            # for i in range(10):
+            #     temp.append(lesser_adjs[f][np.random.randint(len(lesser_adjs[f]))])
+            # return temp
+            return lesser_adjs[f][np.random.randint(len(lesser_adjs[f]))]
     else:
         # j is greater
         if (noisy and np.random.rand() < prob):
             # by prob chance, return the opposite comparison
             # i is greater
             # print("some adj: " + str(lesser_adjs[f][np.random.randint(len(lesser_adjs[f]))]))
-            temp = []
-            for i in range(10):
-                temp.append(lesser_adjs[f][np.random.randint(len(lesser_adjs[f]))])
-            return temp
+            # temp = []
+            # for i in range(10):
+            #     temp.append(lesser_adjs[f][np.random.randint(len(lesser_adjs[f]))])
+            # return temp
+            return lesser_adjs[f][np.random.randint(len(lesser_adjs[f]))]
         else:
             # j is greater
-            temp = []
-            for i in range(10):
-                temp.append(greater_adjs[f][np.random.randint(len(greater_adjs[f]))])
-            return temp
+            # temp = []
+            # for i in range(10):
+            #     temp.append(greater_adjs[f][np.random.randint(len(greater_adjs[f]))])
+            # return temp
+            return greater_adjs[f][np.random.randint(len(greater_adjs[f]))]
 
 def get_comparisons(i, j, set, noisy=False):
     out = []
-    # for feature in ['height', 'velocity', 'distance_to_object', 'sum']:
-    for feature in ['velocity']:
-        out.extend(generate_synthetic_lang_feedback(i, j, feature, set, noisy=noisy))
+    # TODO: CHANGE BACK TO ALL FEATURES
+    for feature in ['height', 'velocity', 'distance_to_object', 'sum']:
+    # for feature in ['velocity']:
+        out.append(generate_synthetic_lang_feedback(i, j, feature, set, noisy=noisy))
     return out
 
 
@@ -709,7 +745,7 @@ if __name__ == '__main__':
     with open(os.path.join(train_dir, "unique_nlcomps.json"), 'r') as file:
         comps = json.load(file)
         # print(comps)
-    # print(comps.shape)
+    print(comps.shape)
 
     # -----------
 
@@ -731,7 +767,7 @@ if __name__ == '__main__':
     with open(os.path.join(test_dir, "unique_nlcomps.json"), 'r') as file:
         comps = json.load(file)
         # print(comps)
-    # print(comps.shape)
+    print(comps.shape)
 
     # -----------
 
@@ -753,5 +789,5 @@ if __name__ == '__main__':
     with open(os.path.join(val_dir, "unique_nlcomps.json"), 'r') as file:
         comps = json.load(file)
         # print(comps)
-    # print(comps.shape)
+    print(comps.shape)
     print("-->>-->>-- Check ^^^ everything looks okay?? --<<--<<--")
