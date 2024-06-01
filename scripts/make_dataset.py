@@ -24,7 +24,7 @@ feature_vals_test = []
 feature_vals_val = []
 
 index_weights = []
-features = ['height', 'velocity', 'distance_to_object', 'sum']
+features = ['height', 'velocity', 'distance_to_object']
 
 # default 500, will be ovewritten by num columnns in actions.json
 NUM_TIMESTEPS = 500
@@ -33,14 +33,14 @@ NUM_TIMESTEPS = 500
 greater_height_adjs = ["Move higher.", "Move taller.", "Move at a greater height."]
 greater_velocity_adjs = ["Move faster.", "Move quicker.", "Move swifter.", "Move at a higher speed."]
 greater_distance_adjs = ["Move further from the button.", "Move farther from the button.", "Move more distant from the button."]
-greater_sum_adjs = ["Press the button better.", "Press the button more successfully."]
-greater_adjs = [greater_height_adjs] + [greater_velocity_adjs] + [greater_distance_adjs] + [greater_sum_adjs]
+# greater_sum_adjs = ["Press the button better.", "Press the button more successfully."]
+greater_adjs = [greater_height_adjs] + [greater_velocity_adjs] + [greater_distance_adjs]
 
 lesser_height_adjs = ["Move lower.", "Move more down.", "Move at a lesser height."]
 lesser_velocity_adjs = ["Move slower.", "Move more moderate.", "Move more sluggish.", "Move at a lower speed."]
 lesser_distance_adjs = ["Move closer to the button.", "Move nearer to the button.", "Move more nearby to the button."]
-lesser_sum_adjs = ["Press the button worse.", "Press the button not as well."]
-lesser_adjs = [lesser_height_adjs] + [lesser_velocity_adjs] + [lesser_distance_adjs] + [lesser_sum_adjs]
+# lesser_sum_adjs = ["Press the button worse.", "Press the button not as well."]
+lesser_adjs = [lesser_height_adjs] + [lesser_velocity_adjs] + [lesser_distance_adjs]
 
 all_adjs = []
 
@@ -158,10 +158,10 @@ def split_dataset(split_train, split_val, split_test, size, split_lang_train, sp
     # ------------------------------
 
     # get indices
-    split_lang_train /= 4
-    split_lang_test /= 4
-    split_lang_val /= 4
-    size_lang /= 4
+    split_lang_train /= len(features)
+    split_lang_test /= len(features)
+    split_lang_val /= len(features)
+    size_lang /= len(features)
     train_indices = np.random.choice(int(size_lang), int(split_lang_train), replace=False)
     val_test_indices = np.setdiff1d(np.arange(size_lang), train_indices)
     test_indices = np.random.choice(val_test_indices, int(split_lang_test), replace=False)
@@ -191,20 +191,20 @@ def split_dataset(split_train, split_val, split_test, size, split_lang_train, sp
     greater_train_0 = [greater_adjs[0][int(i)] for i in train_indices]
     greater_train_1 = [greater_adjs[1][int(i)] for i in train_indices]
     greater_train_2 = [greater_adjs[2][int(i)] for i in train_indices]
-    greater_train_3 = [greater_adjs[3][int(i)] for i in train_indices]
-    greater_train_adjs = [greater_train_0] + [greater_train_1] + [greater_train_2] + [greater_train_3]
+    # greater_train_3 = [greater_adjs[3][int(i)] for i in train_indices]
+    greater_train_adjs = [greater_train_0] + [greater_train_1] + [greater_train_2]
     # test
     greater_test_0 = [greater_adjs[0][int(i)] for i in test_indices]
     greater_test_1 = [greater_adjs[1][int(i)] for i in test_indices]
     greater_test_2 = [greater_adjs[2][int(i)] for i in test_indices]
-    greater_test_3 = [greater_adjs[3][int(i)] for i in test_indices]
-    greater_test_adjs = [greater_test_0] + [greater_test_1] + [greater_test_2] + [greater_test_3]
+    # greater_test_3 = [greater_adjs[3][int(i)] for i in test_indices]
+    greater_test_adjs = [greater_test_0] + [greater_test_1] + [greater_test_2]
     # val
     greater_val_0 = [greater_adjs[0][int(i)] for i in val_indices]
     greater_val_1 = [greater_adjs[1][int(i)] for i in val_indices]
     greater_val_2 = [greater_adjs[2][int(i)] for i in val_indices]
-    greater_val_3 = [greater_adjs[3][int(i)] for i in val_indices]
-    greater_val_adjs = [greater_val_0] + [greater_val_1] + [greater_val_2] + [greater_val_3]
+    # greater_val_3 = [greater_adjs[3][int(i)] for i in val_indices]
+    greater_val_adjs = [greater_val_0] + [greater_val_1] + [greater_val_2]
 
     greater_adjs = []
 
@@ -213,20 +213,20 @@ def split_dataset(split_train, split_val, split_test, size, split_lang_train, sp
     lesser_train_0 = [lesser_adjs[0][int(i)] for i in train_indices]
     lesser_train_1 = [lesser_adjs[1][int(i)] for i in train_indices]
     lesser_train_2 = [lesser_adjs[2][int(i)] for i in train_indices]
-    lesser_train_3 = [lesser_adjs[3][int(i)] for i in train_indices]
-    lesser_train_adjs = [lesser_train_0] + [lesser_train_1] + [lesser_train_2] + [lesser_train_3]
+    # lesser_train_3 = [lesser_adjs[3][int(i)] for i in train_indices]
+    lesser_train_adjs = [lesser_train_0] + [lesser_train_1] + [lesser_train_2]
     # test
     lesser_test_0 = [lesser_adjs[0][int(i)] for i in test_indices]
     lesser_test_1 = [lesser_adjs[1][int(i)] for i in test_indices]
     lesser_test_2 = [lesser_adjs[2][int(i)] for i in test_indices]
-    lesser_test_3 = [lesser_adjs[3][int(i)] for i in test_indices]
-    lesser_test_adjs = [lesser_test_0] + [lesser_test_1] + [lesser_test_2] + [lesser_test_3]
+    # lesser_test_3 = [lesser_adjs[3][int(i)] for i in test_indices]
+    lesser_test_adjs = [lesser_test_0] + [lesser_test_1] + [lesser_test_2]
     # val
     lesser_val_0 = [lesser_adjs[0][int(i)] for i in val_indices]
     lesser_val_1 = [lesser_adjs[1][int(i)] for i in val_indices]
     lesser_val_2 = [lesser_adjs[2][int(i)] for i in val_indices]
-    lesser_val_3 = [lesser_adjs[3][int(i)] for i in val_indices]
-    lesser_val_adjs = [lesser_val_0] + [lesser_val_1] + [lesser_val_2] + [lesser_val_3]
+    # lesser_val_3 = [lesser_adjs[3][int(i)] for i in val_indices]
+    lesser_val_adjs = [lesser_val_0] + [lesser_val_1] + [lesser_val_2]
 
     lesser_adjs = []
 
@@ -286,15 +286,14 @@ def form_trajectories():
                 # joint_pos = env_state[0][1]
                 # joint_vel = env_state[0][2]
 
-                # METHOD 2
                 obs = np.array(obs)
+
+                # METHOD 2
                 # cur_tcp_pos = obs[0:3]
                 # prev_tcp_pos = obs[18:21]
                 # pos_diff = cur_tcp_pos - prev_tcp_pos
                 # 3
                 # obs = np.array(pos_diff)
-
-
 
                 # METHOD 1
                 # obs = np.array(obs)
@@ -308,9 +307,10 @@ def form_trajectories():
                 # obs = np.concatenate([obs, np.array(joint_pos), np.array(joint_vel)])
                 # # append velocity (1) to observation (39) = (40) dim
                 # obs = np.append(obs, tcp_vel)
+
                 observations.append(obs)
                 
-                avg_sum_vals.append(avg_sum)
+                # avg_sum_vals.append(avg_sum)
                 height_vals.append(tcp_height)
                 velocity_vals.append(tcp_vel)
                 distance_to_obj_vals.append(tcp_to_obj)
@@ -327,17 +327,16 @@ def form_trajectories():
             all_height_vals.extend(height_vals)
             all_velocity_vals.extend(velocity_vals)
             all_distance_to_obj_vals.extend(distance_to_obj_vals)
-            all_avg_sum_vals.extend(avg_sum_vals)
+            # all_avg_sum_vals.extend(avg_sum_vals)
 
             # Add feature values
-            f_vals.append([height_vals] + [velocity_vals] + [distance_to_obj_vals] + [avg_sum_vals])
+            f_vals.append([height_vals] + [velocity_vals] + [distance_to_obj_vals])
 
     # Standardize
     # for every traj in f_vals
     print("len of f_vals: " + str(len(f_vals)))
     for traj in range(0, len(f_vals)):
         # for every feature for the traj
-        print("len of f_vals[traj]: " + str(len(f_vals[traj])))
         for f in range(0, len(f_vals[traj])):
             # standardize
             if (f == 0):
@@ -346,8 +345,8 @@ def form_trajectories():
                 f_vals[traj][f] = (f_vals[traj][f] - np.mean(all_velocity_vals)) / np.std(all_velocity_vals)
             elif (f == 2):
                 f_vals[traj][f] = (f_vals[traj][f] - np.mean(all_distance_to_obj_vals)) / np.std(all_distance_to_obj_vals)
-            elif (f == 3):
-                f_vals[traj][f] = (f_vals[traj][f] - np.mean(all_avg_sum_vals)) / np.std(all_avg_sum_vals)
+            # elif (f == 3):
+            #     f_vals[traj][f] = (f_vals[traj][f] - np.mean(all_avg_sum_vals)) / np.std(all_avg_sum_vals)
             else:
                 print("ERROR: f_vals index out of bounds")
                 return
@@ -367,9 +366,9 @@ def get_gpt_dataset():
     with open(os.path.join(dir, "ver2_gpt_augmented_dataset_metaworld.json"), 'r') as openfile:
         gpt_dataset = json.load(openfile)
     
-    greater_adjs = [gpt_dataset["greater_height"]] + [gpt_dataset["greater_velocity"]] + [gpt_dataset["greater_distance"]] + [gpt_dataset["greater_sum"]]
-    lesser_adjs = [gpt_dataset["lesser_height"]] + [gpt_dataset["lesser_velocity"]] + [gpt_dataset["lesser_distance"]] + [gpt_dataset["lesser_sum"]]
-    all_adjs = greater_adjs[0] + greater_adjs[1] + greater_adjs[2] + greater_adjs[3] + lesser_adjs[0] + lesser_adjs[1] + lesser_adjs[2] + lesser_adjs[3]
+    greater_adjs = [gpt_dataset["greater_height"]] + [gpt_dataset["greater_velocity"]] + [gpt_dataset["greater_distance"]]
+    lesser_adjs = [gpt_dataset["lesser_height"]] + [gpt_dataset["lesser_velocity"]] + [gpt_dataset["lesser_distance"]]
+    all_adjs = greater_adjs[0] + greater_adjs[1] + greater_adjs[2] + lesser_adjs[0] + lesser_adjs[1] + lesser_adjs[2]
 
     all_adjs = list(sorted(set(all_adjs)))
     np.save(os.path.join(dir, "all_adjs.npy"), np.array(all_adjs))
@@ -450,7 +449,7 @@ def generate_synthetic_lang_feedback(i, j, feature, set, noisy=False):
 def get_comparisons(i, j, set, noisy=False):
     out = []
     # TODO: CHANGE BACK TO ALL FEATURES
-    for feature in ['height', 'velocity', 'distance_to_object', 'sum']:
+    for feature in ['height', 'velocity', 'distance_to_object']:
     # for feature in ['velocity']:
         out.append(generate_synthetic_lang_feedback(i, j, feature, set, noisy=noisy))
     return out
@@ -483,7 +482,7 @@ def initialize_globals(use_gpt_dataset, split_train, split_test, split_val, spli
         get_gpt_dataset()
 
     # split the datasets here for trajs, feature_vals, greater_adjs, lesser_adjs
-    split_dataset(split_train=split_train, split_test=split_test, split_val=split_val, size=len(trajs), split_lang_train=split_lang_train, split_lang_test=split_lang_test, split_lang_val=split_lang_val, size_lang=len(greater_adjs[0] + greater_adjs[1] + greater_adjs[2] + greater_adjs[3]))
+    split_dataset(split_train=split_train, split_test=split_test, split_val=split_val, size=len(trajs), split_lang_train=split_lang_train, split_lang_test=split_lang_test, split_lang_val=split_lang_val, size_lang=len(greater_adjs[0] + greater_adjs[1] + greater_adjs[2]))
 
 
 # generate traj a's, traj b's, and comparisons from a --> b
@@ -745,7 +744,7 @@ if __name__ == '__main__':
     with open(os.path.join(train_dir, "unique_nlcomps.json"), 'r') as file:
         comps = json.load(file)
         # print(comps)
-    print(comps.shape)
+    print("comps len:", len(comps))
 
     # -----------
 
@@ -767,7 +766,7 @@ if __name__ == '__main__':
     with open(os.path.join(test_dir, "unique_nlcomps.json"), 'r') as file:
         comps = json.load(file)
         # print(comps)
-    print(comps.shape)
+        print("comps len:", len(comps))
 
     # -----------
 
@@ -789,5 +788,5 @@ if __name__ == '__main__':
     with open(os.path.join(val_dir, "unique_nlcomps.json"), 'r') as file:
         comps = json.load(file)
         # print(comps)
-    print(comps.shape)
+        print("comps len:", len(comps))
     print("-->>-->>-- Check ^^^ everything looks okay?? --<<--<<--")
